@@ -2,9 +2,10 @@
 //  VideoHelper.swift
 //  RaceMaster
 //
-//  Created by 我的小么么 on 2018/8/26.
-//  Copyright © 2018年 赛道控. All rights reserved.
-//
+// Author: Eagle Luo
+// Created: 2018/8/27
+// Copyright © 2018
+
 
 import UIKit
 import AVFoundation
@@ -12,6 +13,13 @@ import MobileCoreServices
 
 class VideoHelper
 {
+    private var captureSession: AVCaptureSession?
+    
+    public func getCaptureSession() -> AVCaptureSession?
+    {
+        return self.captureSession
+    }
+    
     static func startMediaBrowser(delegate: UIViewController & UINavigationControllerDelegate & UIImagePickerControllerDelegate, sourceType: UIImagePickerControllerSourceType) {
         guard UIImagePickerController.isSourceTypeAvailable(sourceType) else { return }
         
@@ -23,7 +31,7 @@ class VideoHelper
         delegate.present(mediaUI, animated: true, completion: nil)
     }
     
-    func startVideoRecorder()
+    public func startVideoRecorder()
     {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized: // The user has previously granted access to the camera.
@@ -41,9 +49,10 @@ class VideoHelper
         case .restricted: // The user can't grant access due to restrictions.
             return
         }
+        
     }
     
-    func setupCaptureSession()
+    private func setupCaptureSession()
     {
         let captureSession = AVCaptureSession()
         captureSession.beginConfiguration()
@@ -58,11 +67,19 @@ class VideoHelper
         captureSession.addInput(videoDeviceInput)
         
         if let audioDevice = getMicrophone(), let audioDeviceInput = try? AVCaptureDeviceInput(device: audioDevice), captureSession.canAddInput(audioDeviceInput) {
-            
+            captureSession.addInput(audioDeviceInput)
         }
+        
+        let movieOutput = AVCaptureMovieFileOutput()
+        guard captureSession.canAddOutput(movieOutput) else { return }
+        captureSession.sessionPreset = .medium
+        captureSession.addOutput(movieOutput)
+        captureSession.commitConfiguration()
+        
+        self.captureSession = captureSession
     }
     
-    func getVideoDevice() -> AVCaptureDevice
+    private func getVideoDevice() -> AVCaptureDevice
     {
         if let device = AVCaptureDevice.default(.builtInDualCamera,
                                                 for: .video, position: .back) {
@@ -75,7 +92,7 @@ class VideoHelper
         }
     }
     
-    func getMicrophone() -> AVCaptureDevice?
+    private func getMicrophone() -> AVCaptureDevice?
     {
         if let device = AVCaptureDevice.default(.builtInMicrophone, for: .video, position: .back) {
             return device

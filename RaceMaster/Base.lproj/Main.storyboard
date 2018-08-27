@@ -58,6 +58,7 @@
                                             <barButtonItem systemItem="camera" id="nhN-9S-K3a">
                                                 <connections>
                                                     <action selector="takeVideo:" destination="BYZ-38-t0r" id="j1O-S3-273"/>
+                                                    <segue destination="qdt-o2-ESN" kind="show" id="yuO-xd-Fjm"/>
                                                 </connections>
                                             </barButtonItem>
                                             <barButtonItem style="plain" systemItem="flexibleSpace" id="Fc6-Fo-lFz"/>
@@ -97,6 +98,21 @@
                 </searchDisplayController>
             </objects>
             <point key="canvasLocation" x="20" y="309"/>
+        </scene>
+        <!--Video View Controller-->
+        <scene sceneID="qIx-Of-qq7">
+            <objects>
+                <viewController id="qdt-o2-ESN" customClass="VideoViewController" customModule="RaceMaster" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Fgf-pp-agf">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="tw2-S9-AhZ"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="41K-qd-UfV" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="857" y="309"/>
         </scene>
         <!--Root View Controller-->
         <scene sceneID="feW-Dw-l3V">

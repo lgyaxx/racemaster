@@ -2,9 +2,10 @@
 //  AppDelegate.swift
 //  RaceMaster
 //
-//  Created by 我的小么么 on 2018/8/26.
-//  Copyright © 2018年 赛道控. All rights reserved.
-//
+// Author: Eagle Luo
+// Created: 2018/8/27
+// Copyright © 2018
+
 
 import UIKit
 
