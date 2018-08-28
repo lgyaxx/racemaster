@@ -4,6 +4,7 @@
 
 import UIKit
 import AVFoundation
+import CoreLocation
 
 class VideoViewController: UIViewController
 {
@@ -11,6 +12,30 @@ class VideoViewController: UIViewController
     private var videoOutput: AVCaptureMovieFileOutput!
     private var videoStartButton: UIButton!
     private var videoStopButton: UIButton!
+    private var videoTimerMinutes: Int = 0
+    private var videoTimerSeconds: Int = 0
+    private var videoTimerDisplay: UILabel!
+    private var videoPreviewView: VideoPreviewView!
+    private var locationManager: CLLocationManager!
+    private var latitudeDisplay: UILabel!
+    private var longitudeDisplay: UILabel!
+    private var speedDisplay: UILabel!
+    private let numberFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.maximumFractionDigits = 6
+        return formatter
+    } ()
+    
+    // MARK: - Device Orientation
+    override var shouldAutorotate: Bool
+    {
+        return false
+    }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask
+    {
+        return .landscapeLeft
+    }
+    // MARK: -
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -19,10 +44,18 @@ class VideoViewController: UIViewController
         videoHelper.startVideoRecorder()
         
         captureSession = videoHelper.getCaptureSession()
+        guard captureSession != nil else {
+            print("Nil captureSession...exiting")
+            return
+        }
         videoOutput = videoHelper.getVideoOutput()
         
+        // force landscape before setting up video preview
+        let orientation = UIInterfaceOrientation.landscapeLeft.rawValue
+        UIDevice.current.setValue(orientation, forKey: "orientation")
+        
         //create video preview layer so we can see real timing video frames
-        let videoPreviewView = createPreview()
+        videoPreviewView = createPreview()
 
         // create a start recording button on top of the preview layer
         videoStartButton = createStartRecordingButton()
@@ -40,20 +73,36 @@ class VideoViewController: UIViewController
     @objc public func startVideoRecording()
     {
         print("Recording started...")
+        
         // remove start button
         videoStartButton.removeFromSuperview()
+        
+        // add stop button
         videoStopButton = createStopRecordingButton()
         view.addSubview(videoStopButton)
         videoStopButton.addTarget(self, action: #selector(VideoViewController.stopVideoRecording), for: .touchUpInside)
         
+        // add a timer
+        videoTimerDisplay = createTimer()
+        view.addSubview(videoTimerDisplay)
         
-        // add stop button
+        // add location data
+        latitudeDisplay = createLatitudeDisplay()
+        longitudeDisplay = createLongitudeDisplay()
+        speedDisplay = createSpeedDisplay()
+        view.addSubview(latitudeDisplay)
+        view.addSubview(longitudeDisplay)
+        view.addSubview(speedDisplay)
+        initializeLocationServices()
         
+        // set up output file name
         let documentDirectories = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         let documentDirectory = documentDirectories.first!
         let videoPath = documentDirectory.appendingPathComponent("test.mp4")
         
+        // remove file with the same name
         try? FileManager.default.removeItem(at: videoPath)
+        // start getting data
         self.videoOutput.startRecording(to: videoPath, recordingDelegate: self)
         
     }
@@ -67,17 +116,18 @@ class VideoViewController: UIViewController
     }
     
     
-    public func createPreview() -> VideoPreviewView
+    public func createPreview() -> VideoPreviewView!
     {
         // create base frame to show video preview
         let videoFrame = UIScreen.main.bounds
         let videoPreviewView = VideoPreviewView(frame: videoFrame)
         videoPreviewView.backgroundColor = UIColor.blue
         videoPreviewView.videoPreviewLayer.session = self.captureSession
-        //        videoPreviewView.videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.portrait
+        videoPreviewView.videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
         return videoPreviewView
     }
     
+    // MARK: - Private functions to create buttons and labels
     // Helper function to create a video control button
     private func createControlButton(origin: CGPoint, size: CGSize,  backgroundImage resourceName: String) -> UIButton
     {
@@ -87,7 +137,7 @@ class VideoViewController: UIViewController
         return button
     }
     
-    private func createStartRecordingButton() -> UIButton
+    private func createStartRecordingButton() -> UIButton!
     {
         let screenBounds = UIScreen.main.bounds
         let screenHalfWidth = floor(screenBounds.width / 2.0)
@@ -102,7 +152,7 @@ class VideoViewController: UIViewController
         return button
     }
     
-    private func createStopRecordingButton() -> UIButton
+    private func createStopRecordingButton() -> UIButton!
     {
         let screenBounds = UIScreen.main.bounds
         let screenHalfWidth = floor(screenBounds.width / 2.0)
@@ -117,6 +167,101 @@ class VideoViewController: UIViewController
         return button
     }
     
+    private func createTimer() -> UILabel!
+    {
+        let timerHeight: CGFloat = 20.0
+        let margin: CGFloat = 5.0
+        let stopButtonFrame = videoStopButton.frame
+        let origin = CGPoint(x: stopButtonFrame.origin.x + margin, y: stopButtonFrame.origin.y - timerHeight - margin)
+        let size = CGSize(width: stopButtonFrame.width - margin * 2, height: 20)
+        
+        let frame = CGRect(origin: origin, size: size)
+        let videoTimerDisplay = UILabel(frame: frame)
+        videoTimerDisplay.text = "00:00"
+        videoTimerDisplay.textAlignment = .center
+        videoTimerDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
+        
+        return videoTimerDisplay
+    }
+    
+    // Mark: - Location services
+    private func initializeLocationServices()
+    {
+        print("Trying to initialize location services...")
+        locationManager = CLLocationManager()
+        switch CLLocationManager.authorizationStatus() {
+        case .notDetermined:
+            // Request when-in-use authorization initially
+            locationManager.requestWhenInUseAuthorization()
+            
+        case .restricted, .denied:
+            // Disable location features
+            fatalError("User has denied location services.")
+            
+        case .authorizedWhenInUse:
+            // Enable basic location features
+            break
+            
+        case .authorizedAlways:
+            // Enable any of your app's location features
+            break
+        }
+
+        // Do not start services that aren't available.
+        if !CLLocationManager.locationServicesEnabled() {
+            // Location services is not available.
+            print("Location service not available...")
+            return
+        }
+        // Configure and start the service.
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.distanceFilter = 1.0  // In meters.
+        locationManager.delegate = self
+        locationManager.startUpdatingLocation()
+        print("location service started...")
+    }
+    
+    private func createLatitudeDisplay() -> UILabel
+    {
+        let screenBounds = UIScreen.main.bounds
+        
+        let frame = CGRect(origin: CGPoint(x: screenBounds.width * 0.8, y: screenBounds.height * 0.8), size: CGSize(width: 300, height: 20))
+        
+        let latitudeDisplay = UILabel(frame: frame)
+        latitudeDisplay.text = ""
+        latitudeDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
+        
+        return latitudeDisplay
+    }
+    
+    private func createLongitudeDisplay() -> UILabel
+    {
+        let height: CGFloat = 20
+        let offset: CGFloat = 5
+        let latitudeFrame = latitudeDisplay.frame
+        let origin = CGPoint(x: latitudeFrame.origin.x, y: latitudeFrame.origin.y + height + offset)
+        let frame = CGRect(origin: origin, size: CGSize(width: 300, height: height))
+        
+        let longitudeDisplay = UILabel(frame: frame)
+        longitudeDisplay.text = ""
+        longitudeDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
+        
+        return longitudeDisplay
+    }
+    
+    private func createSpeedDisplay() -> UILabel
+    {
+        let screenBounds = UIScreen.main.bounds
+        
+        let frame = CGRect(origin: CGPoint(x: screenBounds.width * 0.8, y: screenBounds.height * 0.7), size: CGSize(width: 120, height: 20))
+        
+        let speedDisplay = UILabel(frame: frame)
+        speedDisplay.text = ""
+        speedDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
+        
+        return speedDisplay
+    }
+    
 }
 
 extension VideoViewController: AVCaptureFileOutputRecordingDelegate
@@ -126,6 +271,21 @@ extension VideoViewController: AVCaptureFileOutputRecordingDelegate
         // save video to camera roll
         if error == nil {
             UISaveVideoAtPathToSavedPhotosAlbum(outputFileURL.path, nil, nil, nil)
+        }
+    }
+}
+
+extension VideoViewController: CLLocationManagerDelegate
+{
+    func locationManager(_ manager: CLLocationManager,  didUpdateLocations locations: [CLLocation]) {
+        if let lastLocation = locations.last, latitudeDisplay != nil, longitudeDisplay != nil, speedDisplay != nil {
+            print(lastLocation)
+            self.latitudeDisplay.text = "Latitude: " + numberFormatter.string(from: NSNumber(value: lastLocation.coordinate.latitude))!
+            self.longitudeDisplay.text = "Longitude: " + numberFormatter.string(from: NSNumber(value: lastLocation.coordinate.longitude))!
+            self.speedDisplay.text = "Speed: " + String(lastLocation.speed)
+        }
+        else {
+            print("Invalid location data.")
         }
     }
 }
