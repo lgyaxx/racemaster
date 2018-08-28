@@ -11,11 +11,66 @@ import UIKit
 import AVFoundation
 import MobileCoreServices
 
-class VideoHelper
+class VideoHelper: NSObject
 {
-    private var captureSession: AVCaptureSession?
+    private var captureSession: AVCaptureSession!
+    private var videoOutput: AVCaptureMovieFileOutput!
     
-    public func getCaptureSession() -> AVCaptureSession?
+    // MARK: - Private Functions
+    
+    private func setupCaptureSession()
+    {
+        let captureSession = AVCaptureSession()
+        captureSession.beginConfiguration()
+        let videoDevice = getVideoDevice()
+        
+        guard
+            let videoDeviceInput = try? AVCaptureDeviceInput(device: videoDevice),
+            captureSession.canAddInput(videoDeviceInput)
+            else {
+                return
+        }
+        captureSession.addInput(videoDeviceInput)
+        
+        if let audioDevice = getMicrophone(), let audioDeviceInput = try? AVCaptureDeviceInput(device: audioDevice), captureSession.canAddInput(audioDeviceInput) {
+            captureSession.addInput(audioDeviceInput)
+        }
+        
+        videoOutput = AVCaptureMovieFileOutput()
+        guard captureSession.canAddOutput(videoOutput) else { return }
+        captureSession.addOutput(videoOutput)
+        
+        captureSession.sessionPreset = .medium
+        captureSession.commitConfiguration()
+        
+        self.captureSession = captureSession
+    }
+    
+    
+    private func getVideoDevice() -> AVCaptureDevice
+    {
+        if let device = AVCaptureDevice.default(.builtInDualCamera,
+                                                for: .video, position: .back) {
+            return device
+        } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera,
+                                                       for: .video, position: .back) {
+            return device
+        } else {
+            fatalError("Missing expected back camera device.")
+        }
+    }
+    
+    private func getMicrophone() -> AVCaptureDevice?
+    {
+        if let device = AVCaptureDevice.default(.builtInMicrophone, for: .video, position: .back) {
+            return device
+        }
+        return nil
+    }
+
+    // MARK: - Public functions
+    
+    public func getCaptureSession() -> AVCaptureSession!
     {
         return self.captureSession
     }
@@ -43,7 +98,6 @@ class VideoHelper
                     self.setupCaptureSession()
                 }
             }
-            
         case .denied: // The user has previously denied access.
             return
         case .restricted: // The user can't grant access due to restrictions.
@@ -52,51 +106,14 @@ class VideoHelper
         
     }
     
-    private func setupCaptureSession()
+    public func stopRecording()
     {
-        let captureSession = AVCaptureSession()
-        captureSession.beginConfiguration()
-        let videoDevice = getVideoDevice()
- 
-        guard
-            let videoDeviceInput = try? AVCaptureDeviceInput(device: videoDevice),
-            captureSession.canAddInput(videoDeviceInput)
-        else {
-            return
-        }
-        captureSession.addInput(videoDeviceInput)
-        
-        if let audioDevice = getMicrophone(), let audioDeviceInput = try? AVCaptureDeviceInput(device: audioDevice), captureSession.canAddInput(audioDeviceInput) {
-            captureSession.addInput(audioDeviceInput)
-        }
-        
-        let movieOutput = AVCaptureMovieFileOutput()
-        guard captureSession.canAddOutput(movieOutput) else { return }
-        captureSession.sessionPreset = .medium
-        captureSession.addOutput(movieOutput)
-        captureSession.commitConfiguration()
-        
-        self.captureSession = captureSession
+        videoOutput?.stopRecording()
     }
     
-    private func getVideoDevice() -> AVCaptureDevice
+    public func getVideoOutput() -> AVCaptureMovieFileOutput!
     {
-        if let device = AVCaptureDevice.default(.builtInDualCamera,
-                                                for: .video, position: .back) {
-            return device
-        } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera,
-                                                       for: .video, position: .back) {
-            return device
-        } else {
-            fatalError("Missing expected back camera device.")
-        }
-    }
-    
-    private func getMicrophone() -> AVCaptureDevice?
-    {
-        if let device = AVCaptureDevice.default(.builtInMicrophone, for: .video, position: .back) {
-            return device
-        }
-        return nil
+        return videoOutput
     }
 }
+
