@@ -41,7 +41,7 @@ class VideoViewController: UIViewController
     // MARK: - Device Orientation
     override var shouldAutorotate: Bool
     {
-        return false
+        return true
     }
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask
     {
