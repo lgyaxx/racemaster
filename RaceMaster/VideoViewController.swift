@@ -109,10 +109,12 @@ class VideoViewController: UIViewController
     {
         // create base frame to show video preview
         let videoFrame = UIScreen.main.bounds
-        let videoPreviewView = VideoPreviewView(frame: videoFrame)
+//        let videoPreviewView = VideoPreviewView(frame: videoFrame)
+        let videoPreviewView = self.view as! VideoPreviewView
         videoPreviewView.backgroundColor = UIColor.blue
         videoPreviewView.videoPreviewLayer.session = self.captureSession
         videoPreviewView.videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
+//        videoPreviewView.frame = view.bounds
         return videoPreviewView
     }
     
@@ -126,7 +128,7 @@ class VideoViewController: UIViewController
         videoStartButton.addTarget(self, action: #selector(VideoViewController.startVideoRecording), for: .touchUpInside)
         
         // add preview to base view
-        view.addSubview(videoPreviewView)
+//        view.addSubview(videoPreviewView)
         // add start button to the base view
         view.addSubview(videoStartButton)
         
