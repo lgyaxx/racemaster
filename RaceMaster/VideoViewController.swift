@@ -5,6 +5,7 @@
 import UIKit
 import AVFoundation
 import CoreLocation
+import Foundation
 
 class VideoViewController: UIViewController
 {
@@ -20,9 +21,10 @@ class VideoViewController: UIViewController
     private var latitudeDisplay: UILabel!
     private var longitudeDisplay: UILabel!
     private var speedDisplay: UILabel!
+    private weak var timer: Timer!
     private let numberFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
-        formatter.maximumFractionDigits = 6
+        formatter.maximumFractionDigits = 2
         return formatter
     } ()
     
@@ -56,16 +58,9 @@ class VideoViewController: UIViewController
         
         //create video preview layer so we can see real timing video frames
         videoPreviewView = createPreview()
+        
+        createStatsViews()
 
-        // create a start recording button on top of the preview layer
-        videoStartButton = createStartRecordingButton()
-        videoStartButton.addTarget(self, action: #selector(VideoViewController.startVideoRecording), for: .touchUpInside)
-        
-        // add preview to base view
-        view.addSubview(videoPreviewView)
-        // add start button to the base view
-        view.addSubview(videoStartButton)
-        
         // start data flow to show preview
         self.captureSession.startRunning()
     }
@@ -78,22 +73,12 @@ class VideoViewController: UIViewController
         videoStartButton.removeFromSuperview()
         
         // add stop button
-        videoStopButton = createStopRecordingButton()
         view.addSubview(videoStopButton)
         videoStopButton.addTarget(self, action: #selector(VideoViewController.stopVideoRecording), for: .touchUpInside)
         
-        // add a timer
-        videoTimerDisplay = createTimer()
+        // add timer display and start timing
         view.addSubview(videoTimerDisplay)
-        
-        // add location data
-        latitudeDisplay = createLatitudeDisplay()
-        longitudeDisplay = createLongitudeDisplay()
-        speedDisplay = createSpeedDisplay()
-        view.addSubview(latitudeDisplay)
-        view.addSubview(longitudeDisplay)
-        view.addSubview(speedDisplay)
-        initializeLocationServices()
+        timer = startTimer()
         
         // set up output file name
         let documentDirectories = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
@@ -110,8 +95,10 @@ class VideoViewController: UIViewController
     @objc public func stopVideoRecording()
     {
         print("Stopping recording...")
+        timer.invalidate()
         videoOutput.stopRecording()
         videoStopButton.removeFromSuperview()
+        videoTimerDisplay.removeFromSuperview()
         view.addSubview(videoStartButton)
     }
     
@@ -125,6 +112,60 @@ class VideoViewController: UIViewController
         videoPreviewView.videoPreviewLayer.session = self.captureSession
         videoPreviewView.videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
         return videoPreviewView
+    }
+    
+    private func createStatsViews()
+    {
+        // create stop button
+        videoStopButton = createStopRecordingButton()
+        
+        // create a start recording button on top of the preview layer
+        videoStartButton = createStartRecordingButton()
+        videoStartButton.addTarget(self, action: #selector(VideoViewController.startVideoRecording), for: .touchUpInside)
+        
+        // add preview to base view
+        view.addSubview(videoPreviewView)
+        // add start button to the base view
+        view.addSubview(videoStartButton)
+        
+        // create a timerDisplay
+        videoTimerDisplay = createTimer()
+        
+        // add location data
+        latitudeDisplay = createLatitudeDisplay()
+        longitudeDisplay = createLongitudeDisplay()
+        speedDisplay = createSpeedDisplay()
+        view.addSubview(latitudeDisplay)
+        view.addSubview(longitudeDisplay)
+        view.addSubview(speedDisplay)
+        // start location service
+        initializeLocationServices()
+    }
+    
+    private func startTimer() -> Timer
+    {
+        return Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { Timer in
+            self.videoTimerSeconds += 1
+            if self.videoTimerSeconds == 60 {
+                self.videoTimerMinutes += 1
+                self.videoTimerSeconds = 0
+            }
+            var secondString = String(self.videoTimerSeconds)
+            if self.videoTimerSeconds < 10 {
+                secondString = "0" + secondString
+            }
+            var minuteString = String(self.videoTimerMinutes)
+            if self.videoTimerMinutes < 10 {
+                minuteString = "0" + minuteString
+            }
+            self.videoTimerDisplay.text = minuteString + ":" + secondString
+        })
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+//
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+//                self.startTimer()
+//            }
+//        }
     }
     
     // MARK: - Private functions to create buttons and labels
@@ -228,7 +269,7 @@ class VideoViewController: UIViewController
         let frame = CGRect(origin: CGPoint(x: screenBounds.width * 0.8, y: screenBounds.height * 0.8), size: CGSize(width: 300, height: 20))
         
         let latitudeDisplay = UILabel(frame: frame)
-        latitudeDisplay.text = ""
+        latitudeDisplay.text = "纬度: "
         latitudeDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
         
         return latitudeDisplay
@@ -243,7 +284,7 @@ class VideoViewController: UIViewController
         let frame = CGRect(origin: origin, size: CGSize(width: 300, height: height))
         
         let longitudeDisplay = UILabel(frame: frame)
-        longitudeDisplay.text = ""
+        longitudeDisplay.text = "经度: "
         longitudeDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
         
         return longitudeDisplay
@@ -256,7 +297,7 @@ class VideoViewController: UIViewController
         let frame = CGRect(origin: CGPoint(x: screenBounds.width * 0.8, y: screenBounds.height * 0.7), size: CGSize(width: 120, height: 20))
         
         let speedDisplay = UILabel(frame: frame)
-        speedDisplay.text = ""
+        speedDisplay.text = "速度: "
         speedDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
         
         return speedDisplay
@@ -280,12 +321,45 @@ extension VideoViewController: CLLocationManagerDelegate
     func locationManager(_ manager: CLLocationManager,  didUpdateLocations locations: [CLLocation]) {
         if let lastLocation = locations.last, latitudeDisplay != nil, longitudeDisplay != nil, speedDisplay != nil {
             print(lastLocation)
-            self.latitudeDisplay.text = "Latitude: " + numberFormatter.string(from: NSNumber(value: lastLocation.coordinate.latitude))!
-            self.longitudeDisplay.text = "Longitude: " + numberFormatter.string(from: NSNumber(value: lastLocation.coordinate.longitude))!
-            self.speedDisplay.text = "Speed: " + String(lastLocation.speed)
+            let coords = decimalCoords(toDMSFormat: lastLocation.coordinate)
+            
+            self.latitudeDisplay.text = "纬度: " + coords.latitude
+            self.longitudeDisplay.text = "经度: " + coords.longitude
+            self.speedDisplay.text = "实时速度: " + String(lastLocation.speed)
         }
         else {
             print("Invalid location data.")
         }
+    }
+    
+    /*
+    ** Function to convert CLLocationCoordinate2D object to DMS(Degree, Minute, Second) format
+    */
+    private func decimalCoords(toDMSFormat coords: CLLocationCoordinate2D) -> (latitude: String, longitude: String)
+    {
+        let latitude = coords.latitude
+        let longitude = coords.longitude
+        
+        var degree = Int(latitude)
+        var fraction = latitude.truncatingRemainder(dividingBy: 1.0)
+        var value = fraction * 60
+        var minutes = Int(value)
+        fraction = value.truncatingRemainder(dividingBy: 1.0)
+        var seconds = numberFormatter.string(from: NSNumber(value: fraction * 60)) ?? ""
+        
+        let latitudeString = String(format: "%d°%d'%@''%@", abs(degree), minutes, seconds, degree >= 0 ? "N" : "S")
+        
+        print("Latitude string: \(latitudeString)")
+        
+        degree = Int(longitude)
+        fraction = longitude.truncatingRemainder(dividingBy: 1.0)
+        value = fraction * 60
+        minutes = Int(value)
+        fraction = value.truncatingRemainder(dividingBy: 1.0)
+        seconds = numberFormatter.string(from: NSNumber(value: fraction * 60)) ?? ""
+        
+        let longitudeString = String(format: "%d°%d'%@''%@", abs(degree), minutes, seconds, degree >= 0 ? "E" : "W")
+        print("Longitude string: \(longitudeString)")
+        return (latitude: latitudeString, longitude: longitudeString)
     }
 }
