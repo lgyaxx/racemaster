@@ -41,12 +41,18 @@ class VideoViewController: UIViewController
     // MARK: - Device Orientation
     override var shouldAutorotate: Bool
     {
-        return true
+        return false
     }
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask
     {
         return .landscapeLeft
     }
+    
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation
+    {
+        return .landscapeLeft
+    }
+    
     // MARK: -
     
     override func viewDidLoad() {
@@ -109,12 +115,13 @@ class VideoViewController: UIViewController
     {
         // create base frame to show video preview
         let videoFrame = UIScreen.main.bounds
-//        let videoPreviewView = VideoPreviewView(frame: videoFrame)
-        let videoPreviewView = self.view as! VideoPreviewView
+        let videoPreviewView = VideoPreviewView(frame: videoFrame)
+//        let videoPreviewView = self.view as! VideoPreviewView
         videoPreviewView.backgroundColor = UIColor.blue
         videoPreviewView.videoPreviewLayer.session = self.captureSession
         videoPreviewView.videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
 //        videoPreviewView.frame = view.bounds
+        
         return videoPreviewView
     }
     
@@ -128,7 +135,11 @@ class VideoViewController: UIViewController
         videoStartButton.addTarget(self, action: #selector(VideoViewController.startVideoRecording), for: .touchUpInside)
         
         // add preview to base view
-//        view.addSubview(videoPreviewView)
+        print("View bounds: width \(view.bounds.width) Height \(view.bounds.height)")
+        print("Preview bounds: witdh \(videoPreviewView.frame.width) Height \(videoPreviewView.frame.height)")
+        print("Screen bounds: width \(UIScreen.main.bounds.width) Height \(UIScreen.main.bounds.height)")
+        view.addSubview(videoPreviewView)
+        
         // add start button to the base view
         view.addSubview(videoStartButton)
         
