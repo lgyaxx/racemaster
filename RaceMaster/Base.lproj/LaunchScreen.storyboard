@@ -1,7 +1,11 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13122.16" systemVersion="17A277" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14113" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina5_9" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13104.12"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -11,9 +15,33 @@
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
-                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" image="record" translatesAutoresizingMaskIntoConstraints="NO" id="4EZ-xT-ft5">
+                                <rect key="frame" x="221" y="287" width="50" height="50"/>
+                            </imageView>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" image="record" translatesAutoresizingMaskIntoConstraints="NO" id="Mmg-cy-hwx">
+                                <rect key="frame" x="105" y="287" width="50" height="50"/>
+                            </imageView>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" image="record-stop" translatesAutoresizingMaskIntoConstraints="NO" id="vpC-VN-Ll2">
+                                <rect key="frame" x="163" y="382" width="48" height="48"/>
+                            </imageView>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" image="record" translatesAutoresizingMaskIntoConstraints="NO" id="dhd-nI-Nfo">
+                                <rect key="frame" x="162.66666666666666" y="324" width="50" height="50"/>
+                            </imageView>
+                        </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="vpC-VN-Ll2" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="EZk-GK-4ee"/>
+                            <constraint firstItem="dhd-nI-Nfo" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Lgx-sA-LFq"/>
+                            <constraint firstItem="vpC-VN-Ll2" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="a2o-0T-hcI"/>
+                            <constraint firstItem="dhd-nI-Nfo" firstAttribute="top" secondItem="Mmg-cy-hwx" secondAttribute="bottom" constant="-13" id="agB-rC-CkJ"/>
+                            <constraint firstItem="dhd-nI-Nfo" firstAttribute="top" secondItem="4EZ-xT-ft5" secondAttribute="bottom" constant="-13" id="bDd-I6-Vfm"/>
+                            <constraint firstItem="Mmg-cy-hwx" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="105" id="mif-iu-yY7"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="4EZ-xT-ft5" secondAttribute="trailing" constant="104" id="pgs-bW-cPC"/>
+                            <constraint firstItem="vpC-VN-Ll2" firstAttribute="top" secondItem="dhd-nI-Nfo" secondAttribute="bottom" constant="8" symbolic="YES" id="usq-OI-4xJ"/>
+                        </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                 </viewController>
@@ -22,4 +50,8 @@
             <point key="canvasLocation" x="53" y="375"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="record" width="50" height="50"/>
+        <image name="record-stop" width="48" height="48"/>
+    </resources>
 </document>

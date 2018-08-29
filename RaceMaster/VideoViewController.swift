@@ -27,7 +27,17 @@ class VideoViewController: UIViewController
         formatter.maximumFractionDigits = 2
         return formatter
     } ()
-    
+    private let videoPath: URL = {
+        // set up output file name
+        let documentDirectories = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let documentDirectory = documentDirectories.first!
+        let uniqueName = UUID().uuidString + ".mp4"
+        let videoPath = documentDirectory.appendingPathComponent(uniqueName)
+        
+        // remove file with the same name
+        try? FileManager.default.removeItem(at: videoPath)
+        return videoPath
+    } ()
     // MARK: - Device Orientation
     override var shouldAutorotate: Bool
     {
@@ -80,16 +90,8 @@ class VideoViewController: UIViewController
         view.addSubview(videoTimerDisplay)
         timer = startTimer()
         
-        // set up output file name
-        let documentDirectories = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        let documentDirectory = documentDirectories.first!
-        let videoPath = documentDirectory.appendingPathComponent("test.mp4")
-        
-        // remove file with the same name
-        try? FileManager.default.removeItem(at: videoPath)
         // start getting data
         self.videoOutput.startRecording(to: videoPath, recordingDelegate: self)
-        
     }
     
     @objc public func stopVideoRecording()
@@ -311,6 +313,7 @@ extension VideoViewController: AVCaptureFileOutputRecordingDelegate
         print("FINISHED \(String(describing: error))")
         // save video to camera roll
         if error == nil {
+            print("Output file path is: " + outputFileURL.path)
             UISaveVideoAtPathToSavedPhotosAlbum(outputFileURL.path, nil, nil, nil)
         }
     }
