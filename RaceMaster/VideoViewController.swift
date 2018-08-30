@@ -317,7 +317,7 @@ class VideoViewController: UIViewController
     {
         let screenBounds = UIScreen.main.bounds
         
-        let frame = CGRect(origin: CGPoint(x: screenBounds.width * 0.8, y: screenBounds.height * 0.7), size: CGSize(width: 120, height: 20))
+        let frame = CGRect(origin: CGPoint(x: screenBounds.width * 0.8, y: screenBounds.height * 0.7), size: CGSize(width: 150, height: 20))
         
         let speedDisplay = UILabel(frame: frame)
         speedDisplay.text = "速度: "
