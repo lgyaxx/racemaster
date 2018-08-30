@@ -121,12 +121,15 @@ class VideoViewController: UIViewController
     public func createPreview() -> VideoPreviewView!
     {
         // create base frame to show video preview
-        let videoFrame = UIScreen.main.bounds
-        let videoPreviewView = VideoPreviewView(frame: videoFrame)
+        let videoFrame = self.view.bounds
+        let videoPreviewView = VideoPreviewView()
+        let videoPreviewLayer = videoPreviewView.videoPreviewLayer
 //        let videoPreviewView = self.view as! VideoPreviewView
+        videoPreviewLayer.frame = self.view.bounds
+        videoPreviewLayer.videoGravity = .resizeAspectFill
         videoPreviewView.backgroundColor = UIColor.blue
-        videoPreviewView.videoPreviewLayer.session = self.captureSession
-        videoPreviewView.videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
+        videoPreviewLayer.session = self.captureSession
+        videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
 //        videoPreviewView.frame = view.bounds
         
         return videoPreviewView
@@ -240,7 +243,7 @@ class VideoViewController: UIViewController
         let videoTimerDisplay = UILabel(frame: frame)
         videoTimerDisplay.text = "00:00"
         videoTimerDisplay.textAlignment = .center
-        videoTimerDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
+        videoTimerDisplay.backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
         
         return videoTimerDisplay
     }
@@ -354,7 +357,7 @@ extension VideoViewController: CLLocationManagerDelegate
             
             self.latitudeDisplay.text = "纬度: " + coords.latitude
             self.longitudeDisplay.text = "经度: " + coords.longitude
-            self.speedDisplay.text = "实时速度: " + String(lastLocation.speed)
+            self.speedDisplay.text = "实时速度: " + String(round(abs(lastLocation.speed) * 3.6)) + "km/h"
         }
         else {
             print("Invalid location data.")
