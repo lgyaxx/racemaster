@@ -126,7 +126,7 @@ class VideoViewController: UIViewController
         let videoPreviewLayer = videoPreviewView.videoPreviewLayer
 //        let videoPreviewView = self.view as! VideoPreviewView
         videoPreviewLayer.frame = self.view.bounds
-        videoPreviewLayer.videoGravity = .resizeAspectFill
+//        videoPreviewLayer.videoGravity = .resizeAspectFill
         videoPreviewView.backgroundColor = UIColor.blue
         videoPreviewLayer.session = self.captureSession
         videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
