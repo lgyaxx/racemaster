@@ -55,6 +55,13 @@ class VideoViewController: UIViewController
     
     // MARK: -
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        self.videoPreviewView.frame = self.view.layer.bounds
+        print(#function, "called")
+        debugPrint()
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -135,9 +142,7 @@ class VideoViewController: UIViewController
         videoStartButton.addTarget(self, action: #selector(VideoViewController.startVideoRecording), for: .touchUpInside)
         
         // add preview to base view
-        print("View bounds: width \(view.bounds.width) Height \(view.bounds.height)")
-        print("Preview bounds: witdh \(videoPreviewView.frame.width) Height \(videoPreviewView.frame.height)")
-        print("Screen bounds: width \(UIScreen.main.bounds.width) Height \(UIScreen.main.bounds.height)")
+        debugPrint()
         view.addSubview(videoPreviewView)
         
         // add start button to the base view
@@ -316,6 +321,14 @@ class VideoViewController: UIViewController
         speedDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
         
         return speedDisplay
+    }
+    
+    private func debugPrint()
+    {
+        print("View bounds: width \(view.bounds.width) Height \(view.bounds.height)")
+        print("Preview bounds: witdh \(videoPreviewView.frame.width) Height \(videoPreviewView.frame.height)")
+        print("Screen bounds: width \(UIScreen.main.bounds.width) Height \(UIScreen.main.bounds.height)")
+        
     }
     
 }
