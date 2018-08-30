@@ -58,7 +58,8 @@ class VideoViewController: UIViewController
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        videoPreviewLayer.frame = self.view.layer.bounds
+//        videoPreviewLayer.frame = self.view.layer.bounds
+        videoPreviewView.videoPreviewLayer.frame = self.view.layer.bounds
         print(#function, "called")
         debugPrint()
     }
@@ -81,7 +82,8 @@ class VideoViewController: UIViewController
         UIDevice.current.setValue(orientation, forKey: "orientation")
         
         //create video preview layer so we can see real timing video frames
-        videoPreviewLayer = createPreview()
+//        videoPreviewLayer = createPreview()
+        videoPreviewView = createPreview()
         
         createStatsViews()
 
@@ -119,7 +121,7 @@ class VideoViewController: UIViewController
     }
     
     
-    public func createPreview() -> AVCaptureVideoPreviewLayer!
+    public func createPreview() -> VideoPreviewView!
     {
         // create base frame to show video preview
         let videoFrame = self.view.bounds
@@ -127,13 +129,13 @@ class VideoViewController: UIViewController
         let videoPreviewLayer = videoPreviewView.videoPreviewLayer
 //        let videoPreviewView = self.view as! VideoPreviewView
         videoPreviewLayer.frame = self.view.bounds
-        videoPreviewLayer.videoGravity = .resizeAspectFill
+//        videoPreviewLayer.videoGravity = .resizeAspectFill
         videoPreviewView.backgroundColor = UIColor.blue
         videoPreviewLayer.session = self.captureSession
         videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
 //        videoPreviewView.frame = view.bounds
         
-        return videoPreviewLayer
+        return videoPreviewView
     }
     
     private func createStatsViews()
@@ -147,8 +149,8 @@ class VideoViewController: UIViewController
         
         // add preview to base view
         debugPrint()
-//        view.addSubview(videoPreviewView)
-        view.layer.insertSublayer(videoPreviewLayer, at: 0)
+        view.addSubview(videoPreviewView)
+//        view.layer.insertSublayer(videoPreviewLayer, at: 0)
         
         // add start button to the base view
         view.addSubview(videoStartButton)
