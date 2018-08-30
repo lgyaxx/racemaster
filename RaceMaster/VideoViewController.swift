@@ -58,10 +58,8 @@ class VideoViewController: UIViewController
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-//        videoPreviewLayer.frame = self.view.layer.bounds
-        videoPreviewView.videoPreviewLayer.frame = self.view.layer.bounds
+        videoPreviewLayer.frame = self.view.layer.bounds
         print(#function, "called")
-        debugPrint()
     }
     
     override func viewDidLoad() {
@@ -82,8 +80,7 @@ class VideoViewController: UIViewController
         UIDevice.current.setValue(orientation, forKey: "orientation")
         
         //create video preview layer so we can see real timing video frames
-//        videoPreviewLayer = createPreview()
-        videoPreviewView = createPreview()
+        videoPreviewLayer = createPreview()
         
         createStatsViews()
 
@@ -121,7 +118,7 @@ class VideoViewController: UIViewController
     }
     
     
-    public func createPreview() -> VideoPreviewView!
+    public func createPreview() -> AVCaptureVideoPreviewLayer!
     {
         // create base frame to show video preview
         let videoFrame = self.view.bounds
@@ -129,13 +126,13 @@ class VideoViewController: UIViewController
         let videoPreviewLayer = videoPreviewView.videoPreviewLayer
 //        let videoPreviewView = self.view as! VideoPreviewView
         videoPreviewLayer.frame = self.view.bounds
-//        videoPreviewLayer.videoGravity = .resizeAspectFill
+        videoPreviewLayer.videoGravity = .resizeAspectFill
         videoPreviewView.backgroundColor = UIColor.blue
         videoPreviewLayer.session = self.captureSession
         videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
 //        videoPreviewView.frame = view.bounds
         
-        return videoPreviewView
+        return videoPreviewLayer
     }
     
     private func createStatsViews()
@@ -148,9 +145,7 @@ class VideoViewController: UIViewController
         videoStartButton.addTarget(self, action: #selector(VideoViewController.startVideoRecording), for: .touchUpInside)
         
         // add preview to base view
-        debugPrint()
-        view.addSubview(videoPreviewView)
-//        view.layer.insertSublayer(videoPreviewLayer, at: 0)
+        view.layer.insertSublayer(videoPreviewLayer, at: 0)
         
         // add start button to the base view
         view.addSubview(videoStartButton)
@@ -332,9 +327,9 @@ class VideoViewController: UIViewController
     
     private func debugPrint()
     {
-//        print("View bounds: width \(view.bounds.width) Height \(view.bounds.height)")
-//        print("Preview bounds: witdh \(videoPreviewView.frame.width) Height \(videoPreviewView.frame.height)")
-//        print("Screen bounds: width \(UIScreen.main.bounds.width) Height \(UIScreen.main.bounds.height)")
+        print("View bounds: width \(view.bounds.width) Height \(view.bounds.height)")
+        print("Preview bounds: witdh \(videoPreviewView.frame.width) Height \(videoPreviewView.frame.height)")
+        print("Screen bounds: width \(UIScreen.main.bounds.width) Height \(UIScreen.main.bounds.height)")
         
     }
     
