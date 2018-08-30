@@ -57,7 +57,7 @@ class VideoViewController: UIViewController
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        self.videoPreviewView.frame = self.view.layer.bounds
+        self.videoPreviewView.videoPreviewLayer.frame = self.view.layer.bounds
         print(#function, "called")
         debugPrint()
     }
