@@ -7,21 +7,53 @@ import AVFoundation
 import CoreLocation
 import Foundation
 
+extension UIView {
+    func slideUp(_ duration:CFTimeInterval) {
+        let animation:CATransition = CATransition()
+        animation.timingFunction = CAMediaTimingFunction(name:
+            kCAMediaTimingFunctionEaseInEaseOut)
+        animation.type = kCATransitionPush
+        animation.subtype = kCATransitionFromTop
+        animation.duration = duration
+        layer.add(animation, forKey: kCATransitionPush)
+    }
+    
+    func slideDown(_ duration:CFTimeInterval) {
+        let animation:CATransition = CATransition()
+        animation.timingFunction = CAMediaTimingFunction(name:
+            kCAMediaTimingFunctionEaseInEaseOut)
+        animation.type = kCATransitionPush
+        animation.subtype = kCATransitionFromBottom
+        animation.duration = duration
+        layer.add(animation, forKey: kCATransitionPush)
+    }
+}
+
 class VideoViewController: UIViewController
 {
+    private let labelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
     private var captureSession: AVCaptureSession!
     private var videoOutput: AVCaptureMovieFileOutput!
+    
+    private var videoPreviewView: VideoPreviewView!
+    private var videoPreviewLayer: AVCaptureVideoPreviewLayer!
+    
     private var videoStartButton: UIButton!
     private var videoStopButton: UIButton!
+    
     private var videoTimerMinutes: Int = 0
     private var videoTimerSeconds: Int = 0
     private var videoTimerDisplay: UILabel!
-    private var videoPreviewView: VideoPreviewView!
-    private var videoPreviewLayer: AVCaptureVideoPreviewLayer!
+
+    
     private var locationManager: CLLocationManager!
     private var latitudeDisplay: UILabel!
     private var longitudeDisplay: UILabel!
+    
     private var speedDisplay: UILabel!
+    private var speedDigitLabelsArray: [UILabel] = []
+    private var lastSpeed: Int = 0
+    
     private weak var timer: Timer!
     private let numberFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -121,7 +153,6 @@ class VideoViewController: UIViewController
     public func createPreview() -> AVCaptureVideoPreviewLayer!
     {
         // create base frame to show video preview
-        let videoFrame = self.view.bounds
         let videoPreviewView = VideoPreviewView()
         let videoPreviewLayer = videoPreviewView.videoPreviewLayer
 //        let videoPreviewView = self.view as! VideoPreviewView
@@ -182,12 +213,6 @@ class VideoViewController: UIViewController
             }
             self.videoTimerDisplay.text = minuteString + ":" + secondString
         })
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-//
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-//                self.startTimer()
-//            }
-//        }
     }
     
     // MARK: - Private functions to create buttons and labels
@@ -242,12 +267,12 @@ class VideoViewController: UIViewController
         let videoTimerDisplay = UILabel(frame: frame)
         videoTimerDisplay.text = "00:00"
         videoTimerDisplay.textAlignment = .center
-        videoTimerDisplay.backgroundColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
+        videoTimerDisplay.backgroundColor = labelColor
         
         return videoTimerDisplay
     }
     
-    // Mark: - Location services
+    // MARK: - Location services
     private func initializeLocationServices()
     {
         print("Trying to initialize location services...")
@@ -278,7 +303,7 @@ class VideoViewController: UIViewController
         }
         // Configure and start the service.
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.distanceFilter = 1.0  // In meters.
+        locationManager.distanceFilter = kCLDistanceFilterNone
         locationManager.delegate = self
         locationManager.startUpdatingLocation()
         print("location service started...")
@@ -291,8 +316,8 @@ class VideoViewController: UIViewController
         let frame = CGRect(origin: CGPoint(x: screenBounds.width * 0.8, y: screenBounds.height * 0.8), size: CGSize(width: 300, height: 20))
         
         let latitudeDisplay = UILabel(frame: frame)
-        latitudeDisplay.text = "纬度: "
-        latitudeDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
+        latitudeDisplay.text = ""
+        latitudeDisplay.backgroundColor = labelColor
         
         return latitudeDisplay
     }
@@ -306,8 +331,8 @@ class VideoViewController: UIViewController
         let frame = CGRect(origin: origin, size: CGSize(width: 300, height: height))
         
         let longitudeDisplay = UILabel(frame: frame)
-        longitudeDisplay.text = "经度: "
-        longitudeDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
+        longitudeDisplay.text = ""
+        longitudeDisplay.backgroundColor = labelColor
         
         return longitudeDisplay
     }
@@ -319,8 +344,8 @@ class VideoViewController: UIViewController
         let frame = CGRect(origin: CGPoint(x: screenBounds.width * 0.8, y: screenBounds.height * 0.7), size: CGSize(width: 150, height: 20))
         
         let speedDisplay = UILabel(frame: frame)
-        speedDisplay.text = "速度: "
-        speedDisplay.backgroundColor = UIColor(red: 255, green: 255, blue: 255, alpha: 0.5)
+        speedDisplay.text = ""
+        speedDisplay.backgroundColor = labelColor
         
         return speedDisplay
     }
@@ -354,13 +379,71 @@ extension VideoViewController: CLLocationManagerDelegate
             print(lastLocation)
             let coords = decimalCoords(toDMSFormat: lastLocation.coordinate)
             
-            self.latitudeDisplay.text = "纬度: " + coords.latitude
-            self.longitudeDisplay.text = "经度: " + coords.longitude
-            self.speedDisplay.text = "实时速度: " + String(round(abs(lastLocation.speed) * 3.6)) + "km/h"
+            self.latitudeDisplay.text = coords.latitude
+            self.longitudeDisplay.text = coords.longitude
+            
+            let speed = Int(round(abs(lastLocation.speed * 3.6)))
+            lastSpeed = speed
+            updateSpeedLabel(speed)
         }
         else {
             print("Invalid location data.")
         }
+    }
+    
+    private func updateSpeedLabel(_ speed: Int)
+    {
+        let digits = getDigits(speed)
+        let lastSpeedDigits = getDigits(lastSpeed)
+        print("Speed \(speed) number of digits \(digits)")
+        
+        var index = 1
+        let smallerIndex = min(digits.count, lastSpeedDigits.count)
+        while index <= smallerIndex {
+            var changeFrom = digits[index]!
+            if lastSpeedDigits[index]! > changeFrom { // decrement the label
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    self.speedDigitLabelsArray[index].text = String(changeFrom)
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
+                        self.speedDigitLabelsArray[index].text = String(changeFrom)
+                    })
+                }
+                Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: <#T##Selector#>, userInfo: <#T##Any?#>, repeats: <#T##Bool#>)
+            }
+            else { // increment the label
+                
+            }
+            index += 1
+        }
+        if speedDigitLabelsArray.count == digits.count {
+            for label in speedDigitLabelsArray {
+                
+            }
+        }
+        self.speedDisplay.slideDown(0.4)
+        self.speedDisplay.text = String()
+    }
+    
+    private func updateDigit()
+    {
+        
+    }
+    
+    
+    // digits will be of format [1:
+    private func getDigits(_ speed: Int) -> [Int: Int]
+    {
+        var digits = [Int: Int]()
+        var speed = speed
+        var index = 1
+        while (speed / 10 != 0) {
+            digits[index] = speed % 10
+            speed /= 10
+            index += 1
+        }
+        print(digits)
+        return digits
     }
     
     /*
