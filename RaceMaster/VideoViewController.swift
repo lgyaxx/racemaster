@@ -27,6 +27,15 @@ extension UIView {
         animation.duration = duration
         layer.add(animation, forKey: kCATransitionPush)
     }
+    
+    public func pin(to view: UIView) {
+        NSLayoutConstraint.activate([
+            leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            topAnchor.constraint(equalTo: view.topAnchor),
+            bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+    }
 }
 
 class VideoViewController: UIViewController
@@ -44,14 +53,20 @@ class VideoViewController: UIViewController
     private var videoTimerMinutes: Int = 0
     private var videoTimerSeconds: Int = 0
     private var videoTimerDisplay: UILabel!
-
     
     private var locationManager: CLLocationManager!
     private var latitudeDisplay: UILabel!
     private var longitudeDisplay: UILabel!
     
-    private var speedDisplay: UILabel!
-    private var speedDigitLabelsArray: [UILabel] = []
+    private lazy var speedDisplayBackground: UIView = {
+        let view = UIView()
+        view.backgroundColor = labelColor
+        view.layer.cornerRadius = 5.0
+        return view
+    }()
+    @IBOutlet var speedDisplay: UIStackView!
+    @IBOutlet var speedReading: UILabel!
+    private var currentSpeed: Int = 0
     private var lastSpeed: Int = 0
     
     private weak var timer: Timer!
@@ -91,7 +106,7 @@ class VideoViewController: UIViewController
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         videoPreviewLayer.frame = self.view.layer.bounds
-        print(#function, "called")
+//        view.sendSubview(toBack: videoPreviewView)
     }
     
     override func viewDidLoad() {
@@ -114,10 +129,14 @@ class VideoViewController: UIViewController
         //create video preview layer so we can see real timing video frames
         videoPreviewLayer = createPreview()
         
+        speedDisplay.directionalLayoutMargins.leading = 5.0
+        pinBackground(speedDisplayBackground, to: speedDisplay)
         createStatsViews()
+        
 
         // start data flow to show preview
         self.captureSession.startRunning()
+        
     }
     
     @objc public func startVideoRecording()
@@ -162,7 +181,6 @@ class VideoViewController: UIViewController
         videoPreviewLayer.session = self.captureSession
         videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
 //        videoPreviewView.frame = view.bounds
-        
         return videoPreviewLayer
     }
     
@@ -190,7 +208,7 @@ class VideoViewController: UIViewController
         speedDisplay = createSpeedDisplay()
         view.addSubview(latitudeDisplay)
         view.addSubview(longitudeDisplay)
-        view.addSubview(speedDisplay)
+
         // start location service
         initializeLocationServices()
     }
@@ -337,27 +355,17 @@ class VideoViewController: UIViewController
         return longitudeDisplay
     }
     
-    private func createSpeedDisplay() -> UILabel
+    private func createSpeedDisplay() -> UIStackView
     {
         let screenBounds = UIScreen.main.bounds
         
         let frame = CGRect(origin: CGPoint(x: screenBounds.width * 0.8, y: screenBounds.height * 0.7), size: CGSize(width: 150, height: 20))
         
-        let speedDisplay = UILabel(frame: frame)
-        speedDisplay.text = ""
+        let speedDisplay = UIStackView(frame: frame)
         speedDisplay.backgroundColor = labelColor
         
         return speedDisplay
     }
-    
-    private func debugPrint()
-    {
-        print("View bounds: width \(view.bounds.width) Height \(view.bounds.height)")
-        print("Preview bounds: witdh \(videoPreviewView.frame.width) Height \(videoPreviewView.frame.height)")
-        print("Screen bounds: width \(UIScreen.main.bounds.width) Height \(UIScreen.main.bounds.height)")
-        
-    }
-    
 }
 
 extension VideoViewController: AVCaptureFileOutputRecordingDelegate
@@ -383,52 +391,89 @@ extension VideoViewController: CLLocationManagerDelegate
             self.longitudeDisplay.text = coords.longitude
             
             let speed = Int(round(abs(lastLocation.speed * 3.6)))
+//            speed = Int(arc4random_uniform(120) + 1)
+            
+            currentSpeed = speed
+            
+            if lastSpeed != currentSpeed {
+                print("label update")
+//                updateSpeedLabel(speed)
+                updateSpeedReading()
+            }
+            
             lastSpeed = speed
-            updateSpeedLabel(speed)
         }
         else {
             print("Invalid location data.")
         }
     }
     
-    private func updateSpeedLabel(_ speed: Int)
+    private func speedChangeFunc(_ changeFrom: Int, _ changeTo: Int) -> Int
     {
-        let digits = getDigits(speed)
-        let lastSpeedDigits = getDigits(lastSpeed)
-        print("Speed \(speed) number of digits \(digits)")
-        
-        var index = 1
-        let smallerIndex = min(digits.count, lastSpeedDigits.count)
-        while index <= smallerIndex {
-            var changeFrom = digits[index]!
-            if lastSpeedDigits[index]! > changeFrom { // decrement the label
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    self.speedDigitLabelsArray[index].text = String(changeFrom)
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-                        self.speedDigitLabelsArray[index].text = String(changeFrom)
-                    })
-                }
-                Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: <#T##Selector#>, userInfo: <#T##Any?#>, repeats: <#T##Bool#>)
-            }
-            else { // increment the label
-                
-            }
-            index += 1
+        if changeTo > changeFrom {
+        return changeFrom + 1
         }
-        if speedDigitLabelsArray.count == digits.count {
-            for label in speedDigitLabelsArray {
-                
-            }
-        }
-        self.speedDisplay.slideDown(0.4)
-        self.speedDisplay.text = String()
+        return changeFrom - 1
     }
     
-    private func updateDigit()
-    {
-        
+    private func pinBackground(_ view: UIView, to stackView: UIStackView) {
+        view.translatesAutoresizingMaskIntoConstraints = false
+        stackView.insertSubview(view, at: 0)
+        view.pin(to: stackView)
     }
+    
+    private func updateSpeedReading()
+    {
+        let changeFrom = lastSpeed
+        let changeTo = currentSpeed
+
+        let nextUpdate: [String: Any] = ["changeTo": speedChangeFunc(changeFrom, changeTo), "until": changeTo]
+        Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
+    }
+    
+    @objc private func updateSpeed(_ timer: Timer)
+    {
+        var nextUpdate = timer.userInfo as! [String: Any]
+        if let until = nextUpdate["until"] as? Int, let changeTo = nextUpdate["changeTo"] as? Int, self.currentSpeed == until { // new speed update hasn't occured, continue updating
+            speedReading.text = String(changeTo)
+            lastSpeed = changeTo
+            if changeTo != until {
+                nextUpdate["changeTo"] = speedChangeFunc(changeTo, until)
+                Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
+            }
+        }
+    }
+    
+//    private func updateSpeedLabel(_ speed: Int)
+//    {
+//        lastSpeed = 15
+//        let digits = getDigits(speed)
+//        let lastSpeedDigits = getDigits(lastSpeed)
+//        print("Speed \(speed), digits \(digits)")
+//        print("LastSpeed \(lastSpeed), digits \(lastSpeedDigits)")
+//
+//
+//        var index = 1
+//        let smallerIndex = min(digits.count, lastSpeedDigits.count)
+//        print("index \(index) smaller: \(smallerIndex)")
+//        while index <= smallerIndex {
+//            if let changeTo = digits[index], let changeFrom = lastSpeedDigits[index] {
+//                print("changeTo \(changeTo) changeFrom \(changeFrom)")
+//                if speed < lastSpeed { // decrement the label
+//                    let nextUpdate = ["labelIndex": index, "changeTo": changeFrom - 1, "until": changeTo]
+//                    Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(decrementDigit), userInfo: nextUpdate, repeats: false)
+//                }
+//                else { // increment the label
+//                    let nextUpdate = ["labelIndex": index, "changeTo": changeFrom + 1, "until": changeTo]
+//                    Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(incrementDigit), userInfo: nextUpdate, repeats: false)
+//                }
+//            }
+//
+//            index += 1
+//        }
+//    }
+//
+
     
     
     // digits will be of format [1:
@@ -437,11 +482,11 @@ extension VideoViewController: CLLocationManagerDelegate
         var digits = [Int: Int]()
         var speed = speed
         var index = 1
-        while (speed / 10 != 0) {
+        repeat {
             digits[index] = speed % 10
             speed /= 10
             index += 1
-        }
+        } while (speed != 0)
         print(digits)
         return digits
     }
