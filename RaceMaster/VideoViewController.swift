@@ -390,7 +390,7 @@ extension VideoViewController: CLLocationManagerDelegate
             self.latitudeDisplay.text = coords.latitude
             self.longitudeDisplay.text = coords.longitude
             
-            let speed = Int(round(abs(lastLocation.speed * 3.6)))
+            let speed = lastLocation.speed < 0 ? 0 : Int(round(lastLocation.speed * 3.6))
 //            speed = Int(arc4random_uniform(120) + 1)
             
             currentSpeed = speed
