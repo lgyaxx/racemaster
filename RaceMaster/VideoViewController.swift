@@ -30,10 +30,10 @@ extension UIView {
     
     public func pin(to view: UIView) {
         NSLayoutConstraint.activate([
-            leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            topAnchor.constraint(equalTo: view.topAnchor),
-            bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
 }
@@ -128,8 +128,7 @@ class VideoViewController: UIViewController
         
         //create video preview layer so we can see real timing video frames
         videoPreviewLayer = createPreview()
-        
-        speedDisplay.directionalLayoutMargins.leading = 5.0
+
         pinBackground(speedDisplayBackground, to: speedDisplay)
         createStatsViews()
         
