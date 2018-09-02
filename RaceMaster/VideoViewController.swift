@@ -396,7 +396,7 @@ extension VideoViewController: CLLocationManagerDelegate
             rawSpeed.backgroundColor = labelColor
             print(round(lastLocation.speed * 3.6))
             rawSpeed.text = "Raw: " + String(lastLocation.speed * 3.6) + "km/h"
-            speed = Int(arc4random_uniform(30) + 1)
+//            speed = Int(arc4random_uniform(30) + 1)
             
             currentSpeed = speed
             
