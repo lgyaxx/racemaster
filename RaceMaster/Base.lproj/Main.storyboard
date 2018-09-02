@@ -126,15 +126,24 @@
                                 <directionalEdgeInsets key="directionalLayoutMargins" top="8" leading="20" bottom="8" trailing="20"/>
                                 <viewLayoutGuide key="safeArea" id="tiy-Gc-ZgY"/>
                             </stackView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Initially: 0" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1EY-2z-Ig6">
+                                <rect key="frame" x="370" y="208" width="72.333333333333314" height="20.333333333333343"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
+                            <constraint firstItem="1EY-2z-Ig6" firstAttribute="centerX" secondItem="Fgf-pp-agf" secondAttribute="centerX" id="Uuc-DG-76r"/>
                             <constraint firstItem="Kdv-2T-5bi" firstAttribute="centerX" secondItem="Fgf-pp-agf" secondAttribute="centerX" id="g1C-H7-jwT"/>
                             <constraint firstItem="Kdv-2T-5bi" firstAttribute="centerY" secondItem="Fgf-pp-agf" secondAttribute="centerY" id="i4P-sv-2xS"/>
+                            <constraint firstItem="1EY-2z-Ig6" firstAttribute="top" secondItem="33q-YP-dLH" secondAttribute="bottom" constant="10" id="pam-bM-Qnc"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="tw2-S9-AhZ"/>
                     </view>
                     <connections>
+                        <outlet property="rawSpeed" destination="1EY-2z-Ig6" id="h0f-zw-z73"/>
                         <outlet property="speedDisplay" destination="Kdv-2T-5bi" id="ORJ-o7-vWV"/>
                         <outlet property="speedReading" destination="QdD-kj-Pda" id="OFY-tL-6Ud"/>
                     </connections>

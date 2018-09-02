@@ -64,10 +64,13 @@ class VideoViewController: UIViewController
         view.layer.cornerRadius = 5.0
         return view
     }()
+    
+    @IBOutlet var rawSpeed: UILabel!
     @IBOutlet var speedDisplay: UIStackView!
     @IBOutlet var speedReading: UILabel!
     private var currentSpeed: Int = 0
     private var lastSpeed: Int = 0
+    private var lastTimestamp: Date = Date()
     
     private weak var timer: Timer!
     private let numberFormatter: NumberFormatter = {
@@ -389,18 +392,26 @@ extension VideoViewController: CLLocationManagerDelegate
             self.latitudeDisplay.text = coords.latitude
             self.longitudeDisplay.text = coords.longitude
             
-            let speed = lastLocation.speed < 0 ? 0 : Int(round(lastLocation.speed * 3.6))
-//            speed = Int(arc4random_uniform(120) + 1)
+            var speed = lastLocation.speed < 0 ? 0 : Int(round(lastLocation.speed * 3.6))
+            rawSpeed.backgroundColor = labelColor
+            print(round(lastLocation.speed * 3.6))
+            rawSpeed.text = "Raw: " + String(lastLocation.speed * 3.6) + "km/h"
+            speed = Int(arc4random_uniform(30) + 1)
             
             currentSpeed = speed
             
             if lastSpeed != currentSpeed {
                 print("label update")
 //                updateSpeedLabel(speed)
-                updateSpeedReading()
+                let difference = Calendar.current.dateComponents([.nanosecond], from: lastTimestamp, to: lastLocation.timestamp)
+                var interval: Double = Double(difference.nanosecond!)
+                print("time interval: \(interval)")
+                interval = interval / 1000000000.0 / Double(abs(currentSpeed - lastSpeed))
+                updateSpeedReading(interval: interval)
             }
             
             lastSpeed = speed
+            lastTimestamp = lastLocation.timestamp
         }
         else {
             print("Invalid location data.")
@@ -421,24 +432,24 @@ extension VideoViewController: CLLocationManagerDelegate
         view.pin(to: stackView)
     }
     
-    private func updateSpeedReading()
+    private func updateSpeedReading(interval: Double)
     {
         let changeFrom = lastSpeed
         let changeTo = currentSpeed
 
-        let nextUpdate: [String: Any] = ["changeTo": speedChangeFunc(changeFrom, changeTo), "until": changeTo]
-        Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
+        let nextUpdate: [String: Any] = ["changeTo": speedChangeFunc(changeFrom, changeTo), "until": changeTo, "interval": interval]
+        Timer.scheduledTimer(timeInterval: interval, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
     }
     
     @objc private func updateSpeed(_ timer: Timer)
     {
         var nextUpdate = timer.userInfo as! [String: Any]
-        if let until = nextUpdate["until"] as? Int, let changeTo = nextUpdate["changeTo"] as? Int, self.currentSpeed == until { // new speed update hasn't occured, continue updating
+        if let until = nextUpdate["until"] as? Int, let changeTo = nextUpdate["changeTo"] as? Int, self.currentSpeed == until, let interval = nextUpdate["interval"] as? Double { // new speed update hasn't occured, continue updating
             speedReading.text = String(changeTo)
             lastSpeed = changeTo
             if changeTo != until {
                 nextUpdate["changeTo"] = speedChangeFunc(changeTo, until)
-                Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
+                Timer.scheduledTimer(timeInterval: interval, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
             }
         }
     }
