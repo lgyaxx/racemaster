@@ -392,21 +392,18 @@ extension VideoViewController: CLLocationManagerDelegate
             self.latitudeDisplay.text = coords.latitude
             self.longitudeDisplay.text = coords.longitude
             
-            var speed = lastLocation.speed < 0 ? 0 : Int(round(lastLocation.speed * 3.6))
+            var speed = lastLocation.speed < 0 ? 0 : Int(ceil(lastLocation.speed * 3.6))
             rawSpeed.backgroundColor = labelColor
-            print(round(lastLocation.speed * 3.6))
             rawSpeed.text = "Raw: " + String(lastLocation.speed * 3.6) + "km/h"
 //            speed = Int(arc4random_uniform(30) + 1)
             
             currentSpeed = speed
             
             if lastSpeed != currentSpeed {
-                print("label update")
-//                updateSpeedLabel(speed)
                 let difference = Calendar.current.dateComponents([.nanosecond], from: lastTimestamp, to: lastLocation.timestamp)
                 var interval: Double = Double(difference.nanosecond!)
                 print("time interval: \(interval)")
-                interval = interval / 1000000000.0 / Double(abs(currentSpeed - lastSpeed))
+                interval = interval / 2000000000.0 / Double(abs(currentSpeed - lastSpeed))
                 updateSpeedReading(interval: interval)
             }
             
