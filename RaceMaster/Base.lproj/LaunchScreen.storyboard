@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14113" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.13.2" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
     <device id="retina5_9" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.9"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -18,40 +18,42 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" image="record" translatesAutoresizingMaskIntoConstraints="NO" id="4EZ-xT-ft5">
-                                <rect key="frame" x="221" y="287" width="50" height="50"/>
+                            <imageView opaque="NO" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="0000113845_resized_7" adjustsImageSizeForAccessibilityContentSizeCategory="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Nqg-og-sLs">
+                                <rect key="frame" x="60" y="129" width="255" height="554"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
-                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" image="record" translatesAutoresizingMaskIntoConstraints="NO" id="Mmg-cy-hwx">
-                                <rect key="frame" x="105" y="287" width="50" height="50"/>
-                            </imageView>
-                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" image="record-stop" translatesAutoresizingMaskIntoConstraints="NO" id="vpC-VN-Ll2">
-                                <rect key="frame" x="163" y="382" width="48" height="48"/>
-                            </imageView>
-                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" image="record" translatesAutoresizingMaskIntoConstraints="NO" id="dhd-nI-Nfo">
-                                <rect key="frame" x="162.66666666666666" y="324" width="50" height="50"/>
-                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="赛道控v1.0" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bSM-zV-PCT">
+                                <rect key="frame" x="124" y="79" width="127" height="32"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="26"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="All rights reserved." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="XTb-iZ-4oL">
+                                <rect key="frame" x="116" y="702" width="143" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Copyright @ 2018" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lcA-b8-bUp">
+                                <rect key="frame" x="118" y="731" width="138" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                        <constraints>
-                            <constraint firstItem="4EZ-xT-ft5" firstAttribute="leading" secondItem="dhd-nI-Nfo" secondAttribute="trailing" constant="8.3333333333333428" id="5TK-VY-krz"/>
-                            <constraint firstItem="vpC-VN-Ll2" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="EZk-GK-4ee"/>
-                            <constraint firstItem="dhd-nI-Nfo" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Lgx-sA-LFq"/>
-                            <constraint firstItem="vpC-VN-Ll2" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="a2o-0T-hcI"/>
-                            <constraint firstItem="dhd-nI-Nfo" firstAttribute="top" secondItem="Mmg-cy-hwx" secondAttribute="bottom" constant="-13" id="agB-rC-CkJ"/>
-                            <constraint firstItem="dhd-nI-Nfo" firstAttribute="top" secondItem="4EZ-xT-ft5" secondAttribute="bottom" constant="-13" id="bDd-I6-Vfm"/>
-                            <constraint firstItem="dhd-nI-Nfo" firstAttribute="leading" secondItem="Mmg-cy-hwx" secondAttribute="trailing" constant="7.6666666666666572" id="mWW-7s-R8l"/>
-                            <constraint firstItem="vpC-VN-Ll2" firstAttribute="top" secondItem="dhd-nI-Nfo" secondAttribute="bottom" constant="8" symbolic="YES" id="usq-OI-4xJ"/>
-                        </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="53" y="375"/>
+            <point key="canvasLocation" x="52" y="374.6305418719212"/>
         </scene>
     </scenes>
     <resources>
-        <image name="record" width="50" height="50"/>
-        <image name="record-stop" width="48" height="48"/>
+        <image name="0000113845_resized_7" width="480" height="672"/>
     </resources>
 </document>

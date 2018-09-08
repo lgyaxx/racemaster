@@ -14,7 +14,8 @@ import MobileCoreServices
 class VideoHelper: NSObject
 {
     private var captureSession: AVCaptureSession!
-    private var videoOutput: AVCaptureMovieFileOutput!
+    private lazy var videoDataOutput = AVCaptureVideoDataOutput()
+    private lazy var audioDataOutput = AVCaptureAudioDataOutput()
     
     // MARK: - Private Functions
     
@@ -36,11 +37,13 @@ class VideoHelper: NSObject
             captureSession.addInput(audioDeviceInput)
         }
         
-        videoOutput = AVCaptureMovieFileOutput()
-        guard captureSession.canAddOutput(videoOutput) else { return }
-        captureSession.addOutput(videoOutput)
+        guard captureSession.canAddOutput(videoDataOutput) else { return }
         
         captureSession.sessionPreset = .medium
+        
+
+        
+        
         captureSession.commitConfiguration()
         
         self.captureSession = captureSession
@@ -75,7 +78,7 @@ class VideoHelper: NSObject
         return self.captureSession
     }
     
-    static func startMediaBrowser(delegate: UIViewController & UINavigationControllerDelegate & UIImagePickerControllerDelegate, sourceType: UIImagePickerControllerSourceType) {
+    static func startMediaBrowser(delegate: UIViewController & UINavigationControllerDelegate & UIImagePickerControllerDelegate, sourceType: UIImagePickerController.SourceType) {
         guard UIImagePickerController.isSourceTypeAvailable(sourceType) else { return }
         
         let mediaUI = UIImagePickerController()
@@ -105,15 +108,6 @@ class VideoHelper: NSObject
         }
         
     }
-    
-    public func stopRecording()
-    {
-        videoOutput?.stopRecording()
-    }
-    
-    public func getVideoOutput() -> AVCaptureMovieFileOutput!
-    {
-        return videoOutput
-    }
+
 }
 

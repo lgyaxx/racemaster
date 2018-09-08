@@ -6,26 +6,28 @@ import UIKit
 import AVFoundation
 import CoreLocation
 import Foundation
+import ImageIO
+
 
 extension UIView {
     func slideUp(_ duration:CFTimeInterval) {
         let animation:CATransition = CATransition()
         animation.timingFunction = CAMediaTimingFunction(name:
-            kCAMediaTimingFunctionEaseInEaseOut)
-        animation.type = kCATransitionPush
-        animation.subtype = kCATransitionFromTop
+            CAMediaTimingFunctionName.easeInEaseOut)
+        animation.type = CATransitionType.push
+        animation.subtype = CATransitionSubtype.fromTop
         animation.duration = duration
-        layer.add(animation, forKey: kCATransitionPush)
+        layer.add(animation, forKey: CATransitionType.push.rawValue)
     }
     
     func slideDown(_ duration:CFTimeInterval) {
         let animation:CATransition = CATransition()
         animation.timingFunction = CAMediaTimingFunction(name:
-            kCAMediaTimingFunctionEaseInEaseOut)
-        animation.type = kCATransitionPush
-        animation.subtype = kCATransitionFromBottom
+            CAMediaTimingFunctionName.easeInEaseOut)
+        animation.type = CATransitionType.push
+        animation.subtype = CATransitionSubtype.fromBottom
         animation.duration = duration
-        layer.add(animation, forKey: kCATransitionPush)
+        layer.add(animation, forKey: CATransitionType.push.rawValue)
     }
     
     public func pin(to view: UIView) {
@@ -38,14 +40,40 @@ extension UIView {
     }
 }
 
+extension UIView {
+    func asImage() -> UIImage {
+        let renderer = UIGraphicsImageRenderer(bounds: bounds)
+        return renderer.image { rendererContext in
+            self.layer.render(in: rendererContext.cgContext)
+        }
+    }
+}
+
 class VideoViewController: UIViewController
 {
-    private let labelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
+    // MARK: - Variables
+    private var isRecordingStarted = false
+    
     private var captureSession: AVCaptureSession!
-    private var videoOutput: AVCaptureMovieFileOutput!
+    private lazy var videoDataOutput = AVCaptureVideoDataOutput()
+    private lazy var audioDataOutput = AVCaptureAudioDataOutput()
+    
+    var videoWriter: AVAssetWriter!
+    var videoWriterInput: AVAssetWriterInput!
+    var audioWriterInput: AVAssetWriterInput!
+    var sessionAtSourceTime: CMTime?
+    
+    fileprivate var videoWriterInputPixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor!
+    fileprivate lazy var sDeviceRgbColorSpace = CGColorSpaceCreateDeviceRGB()
+    fileprivate lazy var bitmapInfo = CGBitmapInfo.byteOrder32Little.union(CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipFirst.rawValue))
+    
+    private lazy var tmpContext = CIContext(options: nil)
+    
+    private let labelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
     
     private var videoPreviewView: VideoPreviewView!
     private var videoPreviewLayer: AVCaptureVideoPreviewLayer!
+    private var videoFrameRect: CGRect!
     
     private var videoStartButton: UIButton!
     private var videoStopButton: UIButton!
@@ -54,9 +82,12 @@ class VideoViewController: UIViewController
     private var videoTimerSeconds: Int = 0
     private var videoTimerDisplay: UILabel!
     
+    @IBOutlet var statsView: UIView!
+    
     private var locationManager: CLLocationManager!
     private var latitudeDisplay: UILabel!
     private var longitudeDisplay: UILabel!
+    private var latitudeDisplayRect: CGRect!
     
     private lazy var speedDisplayBackground: UIView = {
         let view = UIView()
@@ -64,7 +95,8 @@ class VideoViewController: UIViewController
         view.layer.cornerRadius = 5.0
         return view
     }()
-    
+    private var speedLabelSize: CGSize!
+    private var speedLabelRect: CGRect!
     @IBOutlet var rawSpeed: UILabel!
     @IBOutlet var speedDisplay: UIStackView!
     @IBOutlet var speedReading: UILabel!
@@ -89,7 +121,7 @@ class VideoViewController: UIViewController
         try? FileManager.default.removeItem(at: videoPath)
         return videoPath
     } ()
-    // MARK: - Device Orientation
+    // MARK: Device Orientation
     override var shouldAutorotate: Bool
     {
         return false
@@ -103,42 +135,173 @@ class VideoViewController: UIViewController
     {
         return .landscapeLeft
     }
+   
+    
+    // MARK: - Set up capture session
+    
+    private func setupCaptureSession()
+    {
+        let captureSession = AVCaptureSession()
+        captureSession.beginConfiguration()
+        
+        let videoDevice = getVideoDevice()
+        
+        guard
+            let videoDeviceInput = try? AVCaptureDeviceInput(device: videoDevice),
+                captureSession.canAddInput(videoDeviceInput)
+            else {
+                return
+            }
+        captureSession.addInput(videoDeviceInput)
+        
+        if let audioDevice = getMicrophone(), let audioDeviceInput = try? AVCaptureDeviceInput(device: audioDevice), captureSession.canAddInput(audioDeviceInput) {
+            captureSession.addInput(audioDeviceInput)
+        }
+        
+        guard captureSession.canAddOutput(videoDataOutput) else { return }
+    
+        captureSession.sessionPreset = .medium
+        
+        videoDataOutput.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+        ]
+        videoDataOutput.alwaysDiscardsLateVideoFrames = true
+        
+        let queue = DispatchQueue(label: "com.racemaster.queue.record-video.data-output")
+        videoDataOutput.setSampleBufferDelegate(self, queue: queue)
+        
+        //add video output to session
+        captureSession.addOutput(videoDataOutput)
+        
+        //add audio output to session
+        if captureSession.canAddOutput(audioDataOutput) {
+            audioDataOutput.setSampleBufferDelegate(self, queue: queue)
+            captureSession.addOutput(audioDataOutput)
+        }
+        
+        captureSession.commitConfiguration()
+        
+        self.captureSession = captureSession
+    }
+    
+    private func getVideoDevice() -> AVCaptureDevice
+    {
+        if let device = AVCaptureDevice.default(.builtInDualCamera,
+                                                for: .video, position: .back) {
+            return device
+        } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera,
+                                                       for: .video, position: .back) {
+            return device
+        } else {
+            fatalError("Missing expected back camera device.")
+        }
+    }
+    
+    private func getMicrophone() -> AVCaptureDevice?
+    {
+        if let device = AVCaptureDevice.default(.builtInMicrophone, for: .video, position: .back) {
+            return device
+        }
+        return nil
+    }
+    
+    private func testAuthorizedToUseCamera()
+    {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized: // The user has previously granted access to the camera.
+            self.setupCaptureSession()
+            return
+            
+        case .notDetermined: // The user has not yet been asked for camera access.
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                if granted {
+                    self.setupCaptureSession()
+                }
+                else {
+                    fatalError("User denied use of camera")
+                }
+            }
+        case .denied: // The user has previously denied access.
+            fatalError("User denied use of camera")
+        case .restricted: // The user can't grant access due to restrictions.
+            fatalError("User denied use of camera")
+        }
+    }
+    
+    func getAssetWriter() -> AVAssetWriter?
+    {
+        do {
+            
+            videoWriter = try AVAssetWriter(url: videoPath, fileType: AVFileType.mp4)
+            
+            //Add video input
+            videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: [
+                AVVideoCodecKey: AVVideoCodecType.h264,
+                AVVideoWidthKey: 360,
+                AVVideoHeightKey: 480,
+                AVVideoCompressionPropertiesKey: [
+                    AVVideoAverageBitRateKey: 2300000,
+                ],
+                ])
+            videoWriterInput.expectsMediaDataInRealTime = true //Make sure we are exporting data at realtime
+            if videoWriter.canAdd(videoWriterInput) {
+                videoWriter.add(videoWriterInput)
+            }
+            
+            //Add audio input
+            audioWriterInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: [
+                AVFormatIDKey: kAudioFormatMPEG4AAC,
+                AVNumberOfChannelsKey: 1,
+                AVSampleRateKey: 44100,
+                AVEncoderBitRateKey: 64000,
+                ])
+            audioWriterInput.expectsMediaDataInRealTime = true
+            if videoWriter.canAdd(audioWriterInput) {
+                videoWriter.add(audioWriterInput)
+            }
+            
+            videoWriterInputPixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: videoWriterInput, sourcePixelBufferAttributes: [
+                kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+                kCVPixelBufferWidthKey as String: 360,
+                kCVPixelBufferHeightKey as String: 480,
+                kCVPixelFormatOpenGLESCompatibility as String: true,
+                ])
+            
+            return videoWriter
+        }
+        catch let error {
+            fatalError(error.localizedDescription)
+        }
+    }
     
     // MARK: -
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         videoPreviewLayer.frame = self.view.layer.bounds
-//        view.sendSubview(toBack: videoPreviewView)
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let videoHelper = VideoHelper()
-        videoHelper.startVideoRecorder()
+        testAuthorizedToUseCamera()
         
-        captureSession = videoHelper.getCaptureSession()
-        guard captureSession != nil else {
-            print("Nil captureSession...exiting")
-            return
-        }
-        videoOutput = videoHelper.getVideoOutput()
         
         // force landscape before setting up video preview
         let orientation = UIInterfaceOrientation.landscapeLeft.rawValue
         UIDevice.current.setValue(orientation, forKey: "orientation")
         
         //create video preview layer so we can see real timing video frames
-        videoPreviewLayer = createPreview()
+        videoPreviewView = createPreview()
+        videoPreviewLayer = videoPreviewView.videoPreviewLayer
+        videoFrameRect = videoPreviewLayer.bounds
 
         pinBackground(speedDisplayBackground, to: speedDisplay)
         createStatsViews()
         
-
         // start data flow to show preview
         self.captureSession.startRunning()
-        
+        print("start running session")
     }
     
     @objc public func startVideoRecording()
@@ -157,37 +320,72 @@ class VideoViewController: UIViewController
         timer = startTimer()
         
         // start getting data
-        self.videoOutput.startRecording(to: videoPath, recordingDelegate: self)
+        //TODO: add writing function
+        if let writer = getAssetWriter() {
+            
+            speedLabelRect = speedDisplayBackground.bounds
+            latitudeDisplayRect = latitudeDisplay.bounds
+            videoWriter = writer
+            
+            let recordingClock = self.captureSession.masterClock!
+            videoWriter.startWriting()
+            videoWriter.startSession(atSourceTime: CMClockGetTime(recordingClock))
+            print("Start recording...")
+            isRecordingStarted = true
+        }
     }
     
     @objc public func stopVideoRecording()
     {
         print("Stopping recording...")
         timer.invalidate()
-        videoOutput.stopRecording()
+        //TODO: stop recording
+        
         videoStopButton.removeFromSuperview()
         videoTimerDisplay.removeFromSuperview()
         view.addSubview(videoStartButton)
+        
+        if let writer = videoWriter {
+            writer.finishWriting {
+                print("Recording finished")
+                UISaveVideoAtPathToSavedPhotosAlbum(writer.outputURL.path, nil, nil, nil)
+            }
+            self.isRecordingStarted = false
+        }
     }
     
     
-    public func createPreview() -> AVCaptureVideoPreviewLayer!
+    public func createPreview() -> VideoPreviewView
     {
         // create base frame to show video preview
         let videoPreviewView = VideoPreviewView()
+        view.addSubview(videoPreviewView)
         let videoPreviewLayer = videoPreviewView.videoPreviewLayer
-//        let videoPreviewView = self.view as! VideoPreviewView
-        videoPreviewLayer.frame = self.view.bounds
+        videoPreviewLayer.frame = view.bounds
         videoPreviewLayer.videoGravity = .resizeAspectFill
         videoPreviewView.backgroundColor = UIColor.blue
-        videoPreviewLayer.session = self.captureSession
+        videoPreviewLayer.session = captureSession
         videoPreviewLayer.connection?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
-//        videoPreviewView.frame = view.bounds
-        return videoPreviewLayer
+        view.layer.insertSublayer(videoPreviewLayer, at: 0)
+        return videoPreviewView
     }
     
     private func createStatsViews()
     {
+        // add location data
+        latitudeDisplay = createLatitudeDisplay()
+        longitudeDisplay = createLongitudeDisplay()
+        speedDisplay = createSpeedDisplay()
+    
+        // create a dedicated view to contain all stats labels
+//        statsView = UIView(frame: UIScreen.main.bounds)
+        // statsView has tranparent background
+//        statsView.backgroundColor = UIColor.orange
+        
+        statsView.addSubview(latitudeDisplay)
+        statsView.addSubview(longitudeDisplay)
+        view.addSubview(statsView)
+
         // create stop button
         videoStopButton = createStopRecordingButton()
         
@@ -195,22 +393,12 @@ class VideoViewController: UIViewController
         videoStartButton = createStartRecordingButton()
         videoStartButton.addTarget(self, action: #selector(VideoViewController.startVideoRecording), for: .touchUpInside)
         
-        // add preview to base view
-        view.layer.insertSublayer(videoPreviewLayer, at: 0)
-        
         // add start button to the base view
         view.addSubview(videoStartButton)
         
         // create a timerDisplay
         videoTimerDisplay = createTimer()
         
-        // add location data
-        latitudeDisplay = createLatitudeDisplay()
-        longitudeDisplay = createLongitudeDisplay()
-        speedDisplay = createSpeedDisplay()
-        view.addSubview(latitudeDisplay)
-        view.addSubview(longitudeDisplay)
-
         // start location service
         initializeLocationServices()
     }
@@ -373,7 +561,42 @@ class VideoViewController: UIViewController
 extension VideoViewController: AVCaptureFileOutputRecordingDelegate
 {
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        print("FINISHED \(String(describing: error))")
+        
+        if let e = error  {
+            print("\(e)")
+            return
+        }
+        
+//        //create AVAsset for testing
+//        let video = AVAsset(url: outputFileURL)
+//        print("Duration of captured video in second(s): \(video.duration.seconds)")
+//
+//        let videoTracks = video.tracks(withMediaType: .video)
+//        let videoTrack = videoTracks[0]
+//        let videoDuration = video.duration
+//        let videoTimeRange = CMTimeRange(start: CMTime.zero, duration: videoDuration)
+//
+//        var error: NSError?
+//        let composition = AVMutableComposition()
+//        do {
+//            try composition.insertTimeRange(videoTrack.timeRange, of: video, at: videoTrack.timeRange.start)
+//        } catch let outError: NSError {
+//            print("Error calling insertTimeRange: \(outError)")
+//        }
+//
+//        let formatsKey = "availableMetadataFormats"
+//        video.loadValuesAsynchronously(forKeys: [formatsKey]) {
+//            var error: NSError? = nil
+//            let status = video.statusOfValue(forKey: formatsKey, error: &error)
+//            if status == .loaded {
+//                for format in video.availableMetadataFormats {
+//                    let metadata = video.metadata(forFormat: format)
+//                    print("\(metadata)")
+//                }
+//            }
+//        }
+        
+        
         // save video to camera roll
         if error == nil {
             print("Output file path is: " + outputFileURL.path)
@@ -395,7 +618,7 @@ extension VideoViewController: CLLocationManagerDelegate
             var speed = lastLocation.speed < 0 ? 0 : Int(ceil(lastLocation.speed * 3.6))
             rawSpeed.backgroundColor = labelColor
             rawSpeed.text = "Raw: " + String(lastLocation.speed * 3.6) + "km/h"
-//            speed = Int(arc4random_uniform(30) + 1)
+//            speed = Int.random(in: 1...30)
             
             currentSpeed = speed
             
@@ -451,39 +674,7 @@ extension VideoViewController: CLLocationManagerDelegate
         }
     }
     
-//    private func updateSpeedLabel(_ speed: Int)
-//    {
-//        lastSpeed = 15
-//        let digits = getDigits(speed)
-//        let lastSpeedDigits = getDigits(lastSpeed)
-//        print("Speed \(speed), digits \(digits)")
-//        print("LastSpeed \(lastSpeed), digits \(lastSpeedDigits)")
-//
-//
-//        var index = 1
-//        let smallerIndex = min(digits.count, lastSpeedDigits.count)
-//        print("index \(index) smaller: \(smallerIndex)")
-//        while index <= smallerIndex {
-//            if let changeTo = digits[index], let changeFrom = lastSpeedDigits[index] {
-//                print("changeTo \(changeTo) changeFrom \(changeFrom)")
-//                if speed < lastSpeed { // decrement the label
-//                    let nextUpdate = ["labelIndex": index, "changeTo": changeFrom - 1, "until": changeTo]
-//                    Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(decrementDigit), userInfo: nextUpdate, repeats: false)
-//                }
-//                else { // increment the label
-//                    let nextUpdate = ["labelIndex": index, "changeTo": changeFrom + 1, "until": changeTo]
-//                    Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(incrementDigit), userInfo: nextUpdate, repeats: false)
-//                }
-//            }
-//
-//            index += 1
-//        }
-//    }
-//
-
-    
-    
-    // digits will be of format [1:
+    // digits will be of format [1: 0, 2: 1, 3:5, ...]
     private func getDigits(_ speed: Int) -> [Int: Int]
     {
         var digits = [Int: Int]()
@@ -528,4 +719,87 @@ extension VideoViewController: CLLocationManagerDelegate
         print("Longitude string: \(longitudeString)")
         return (latitude: latitudeString, longitude: longitudeString)
     }
+
+    
 }
+
+extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        
+        guard isRecordingStarted, canWrite() else { return }
+        
+        let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
+        let attachments = CMCopyDictionaryOfAttachments(allocator: kCFAllocatorDefault, target: pixelBuffer, attachmentMode: CMAttachmentMode(kCMAttachmentMode_ShouldPropagate)) as? [CIImageOption: Any]
+        
+        let ciImage = CIImage(cvImageBuffer: pixelBuffer, options: attachments)
+
+//        let speedImage = speedDisplayBackground.asImage()
+//        let speedCIImage = CIImage(image: speedImage)!
+        
+//        let box = CGSize(width: 300, height: 300)
+//        UIGraphicsBeginImageContextWithOptions(box, false, 0)
+//        let c = UIGraphicsGetCurrentContext()!
+//        c.clear(videoFrameRect)
+//        c.setFillColor(red: 0, green: 0, blue: 0, alpha: 0)
+//        c.fill(CGRect(origin: CGPoint(x: 0, y: 0), size: box))
+//        c.saveGState()
+//        c.translateBy(x: 100, y: 100)
+//        c.rotate(by: 270 * .pi / 180)
+        
+//        let uiImage = UIImage(ciImage: ciImage)
+//        speedDisplayBackground.asImage().draw(in: videoFrameRect, blendMode: .overlay, alpha: 1.0)
+        let speedString = NSString.init(string: String(Int.random(in: 20...100)))
+        let attrs = [NSAttributedString.Key.font: UIFont(name: "Helvetica", size: 16)!, NSAttributedString.Key.backgroundColor: labelColor, NSAttributedString.Key.foregroundColor: UIColor.black]
+        let stringSize = speedString.size(withAttributes: attrs)
+//        speedString.draw(at: CGPoint(x: -stringSize.width / 2, y: -stringSize.height / 2), withAttributes: attrs)
+//        ciImage.render(in: UIGraphicsGetCurrentContext()!)
+//        let imageConverted: UIImage = UIGraphicsGetImageFromCurrentImageContext()!
+//        UIGraphicsEndImageContext()
+//
+//        UIImageWriteToSavedPhotosAlbum(statsView.asImage(), nil, nil, nil)
+//
+//
+//        let speedCIImage = CIImage(image: imageConverted)!
+        
+//        let speedImage = self.view.snapshotView(afterScreenUpdates: false)!
+//        let outputImage = CIImage(image: speedImage.asImage())!
+//        tmpContext.render(speedCIImage, to: pixelBuffer)
+        
+        
+        CVPixelBufferLockBaseAddress(pixelBuffer, [])
+        let context = CGContext.init(data: CVPixelBufferGetBaseAddress(pixelBuffer), width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue)!
+
+        context.saveGState()
+        context.translateBy(x: CGFloat(context.width), y: 0)
+//        context.translateBy(x: CGFloat(context.width), y: 0)
+//        speedString.draw(in: renderBounds, withAttributes: attrs)
+//        context?.clear(UIScreen.main.bounds)
+//        context?.draw(latitudeDisplay.asImage().cgImage!, in: renderBounds)
+//        context.scaleBy(x: 1.0, y: 1.0)
+        context.rotate(by: CGFloat(Double.pi * 90 / 180))
+//        context.translateBy(x: 0, y: -CGFloat(context.width))
+
+        let outputImage = statsView.asImage().cgImage!
+//        UIImageWriteToSavedPhotosAlbum(outputImage, nil, nil, nil)
+//        context.draw(outputImage, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
+        context.draw(outputImage, in: CGRect(x: 0, y: 0, width: context.height, height: context.width))
+        context.restoreGState()
+        
+        CVPixelBufferUnlockBaseAddress(pixelBuffer, [])
+        
+        if output == videoDataOutput {
+            print("frame captured")
+            if isRecordingStarted, videoWriterInput.isReadyForMoreMediaData {
+                //Write video buffer
+                videoWriterInput.append(sampleBuffer)
+            }
+        }
+    }
+    
+    func canWrite() -> Bool {
+        return isRecordingStarted
+            && videoWriter != nil
+            && videoWriter.status == .writing
+    }
+}
+
