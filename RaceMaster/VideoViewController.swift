@@ -75,6 +75,13 @@ class VideoViewController: UIViewController
     private var videoPreviewLayer: AVCaptureVideoPreviewLayer!
     private var videoFrameRect: CGRect!
     
+    private lazy var returnButton: UIButton = {
+        let origin = CGPoint(x: 50, y: 50)
+        let size = CGSize(width: 50, height: 50)
+        let button = createControlButton(origin: origin, size: size, backgroundImage: "return")
+        button.addTarget(self, action: #selector(VideoViewController.returnToPreviousView), for: .touchUpInside)
+        return button
+    }()
     private var videoStartButton: UIButton!
     private var videoStopButton: UIButton!
     
@@ -320,7 +327,6 @@ class VideoViewController: UIViewController
         timer = startTimer()
         
         // start getting data
-        //TODO: add writing function
         if let writer = getAssetWriter() {
             
             speedLabelRect = speedDisplayBackground.bounds
@@ -351,6 +357,15 @@ class VideoViewController: UIViewController
                 UISaveVideoAtPathToSavedPhotosAlbum(writer.outputURL.path, nil, nil, nil)
             }
             self.isRecordingStarted = false
+        }
+    }
+    
+    @objc private func returnToPreviousView()
+    {
+        if let nav = self.navigationController {
+            nav.popViewController(animated: true)
+        } else {
+            self.dismiss(animated: true, completion: nil)
         }
     }
     
@@ -395,6 +410,9 @@ class VideoViewController: UIViewController
         
         // add start button to the base view
         view.addSubview(videoStartButton)
+        
+        //
+        view.addSubview(returnButton)
         
         // create a timerDisplay
         videoTimerDisplay = createTimer()
