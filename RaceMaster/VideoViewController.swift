@@ -731,40 +731,11 @@ extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVC
         let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
         let attachments = CMCopyDictionaryOfAttachments(allocator: kCFAllocatorDefault, target: pixelBuffer, attachmentMode: CMAttachmentMode(kCMAttachmentMode_ShouldPropagate)) as? [CIImageOption: Any]
         
-        let ciImage = CIImage(cvImageBuffer: pixelBuffer, options: attachments)
-
-//        let speedImage = speedDisplayBackground.asImage()
-//        let speedCIImage = CIImage(image: speedImage)!
-        
-//        let box = CGSize(width: 300, height: 300)
-//        UIGraphicsBeginImageContextWithOptions(box, false, 0)
-//        let c = UIGraphicsGetCurrentContext()!
-//        c.clear(videoFrameRect)
-//        c.setFillColor(red: 0, green: 0, blue: 0, alpha: 0)
-//        c.fill(CGRect(origin: CGPoint(x: 0, y: 0), size: box))
-//        c.saveGState()
-//        c.translateBy(x: 100, y: 100)
-//        c.rotate(by: 270 * .pi / 180)
-        
-//        let uiImage = UIImage(ciImage: ciImage)
-//        speedDisplayBackground.asImage().draw(in: videoFrameRect, blendMode: .overlay, alpha: 1.0)
-        let speedString = NSString.init(string: String(Int.random(in: 20...100)))
-        let attrs = [NSAttributedString.Key.font: UIFont(name: "Helvetica", size: 16)!, NSAttributedString.Key.backgroundColor: labelColor, NSAttributedString.Key.foregroundColor: UIColor.black]
-        let stringSize = speedString.size(withAttributes: attrs)
-//        speedString.draw(at: CGPoint(x: -stringSize.width / 2, y: -stringSize.height / 2), withAttributes: attrs)
-//        ciImage.render(in: UIGraphicsGetCurrentContext()!)
-//        let imageConverted: UIImage = UIGraphicsGetImageFromCurrentImageContext()!
-//        UIGraphicsEndImageContext()
+//        let ciImage = CIImage(cvImageBuffer: pixelBuffer, options: attachments)
 //
-//        UIImageWriteToSavedPhotosAlbum(statsView.asImage(), nil, nil, nil)
-//
-//
-//        let speedCIImage = CIImage(image: imageConverted)!
-        
-//        let speedImage = self.view.snapshotView(afterScreenUpdates: false)!
-//        let outputImage = CIImage(image: speedImage.asImage())!
-//        tmpContext.render(speedCIImage, to: pixelBuffer)
-        
+//        let speedString = NSString.init(string: String(Int.random(in: 20...100)))
+//        let attrs = [NSAttributedString.Key.font: UIFont(name: "Helvetica", size: 16)!, NSAttributedString.Key.backgroundColor: labelColor, NSAttributedString.Key.foregroundColor: UIColor.black]
+//        let stringSize = speedString.size(withAttributes: attrs)
         
         CVPixelBufferLockBaseAddress(pixelBuffer, [])
         let context = CGContext.init(data: CVPixelBufferGetBaseAddress(pixelBuffer), width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue)!
