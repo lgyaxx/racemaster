@@ -177,6 +177,10 @@ class VideoViewController: UIViewController
         let queue = DispatchQueue(label: "com.racemaster.queue.record-video.data-output")
         videoDataOutput.setSampleBufferDelegate(self, queue: queue)
         
+        let connection = videoDataOutput.connection(with: .video)
+
+        connection?.videoOrientation = .landscapeLeft
+        
         //add video output to session
         captureSession.addOutput(videoDataOutput)
         
@@ -244,13 +248,15 @@ class VideoViewController: UIViewController
             //Add video input
             videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: [
                 AVVideoCodecKey: AVVideoCodecType.h264,
-                AVVideoWidthKey: 360,
+                AVVideoWidthKey: 640,
                 AVVideoHeightKey: 480,
                 AVVideoCompressionPropertiesKey: [
                     AVVideoAverageBitRateKey: 2300000,
                 ],
                 ])
             videoWriterInput.expectsMediaDataInRealTime = true //Make sure we are exporting data at realtime
+            
+            
             if videoWriter.canAdd(videoWriterInput) {
                 videoWriter.add(videoWriterInput)
             }
@@ -744,6 +750,10 @@ extension VideoViewController: CLLocationManagerDelegate
 extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
+        //Important: Correct your video orientation from your device orientation
+        connection.videoOrientation = .landscapeLeft
+//        print(connection.videoOrientation.rawValue)
+        
         guard isRecordingStarted, canWrite() else { return }
         
         let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
@@ -758,29 +768,30 @@ extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVC
         CVPixelBufferLockBaseAddress(pixelBuffer, [])
         let context = CGContext.init(data: CVPixelBufferGetBaseAddress(pixelBuffer), width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue)!
 
-        context.saveGState()
-        context.translateBy(x: CGFloat(context.width), y: 0)
+//        context.saveGState()
+//        context.translateBy(x: CGFloat(context.width), y: 0)
 //        context.translateBy(x: CGFloat(context.width), y: 0)
 //        speedString.draw(in: renderBounds, withAttributes: attrs)
 //        context?.clear(UIScreen.main.bounds)
 //        context?.draw(latitudeDisplay.asImage().cgImage!, in: renderBounds)
 //        context.scaleBy(x: 1.0, y: 1.0)
-        context.rotate(by: CGFloat(Double.pi * 90 / 180))
+//        context.rotate(by: CGFloat(Double.pi * 90 / 180))
 //        context.translateBy(x: 0, y: -CGFloat(context.width))
 
         let outputImage = statsView.asImage().cgImage!
 //        UIImageWriteToSavedPhotosAlbum(outputImage, nil, nil, nil)
 //        context.draw(outputImage, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
-        context.draw(outputImage, in: CGRect(x: 0, y: 0, width: context.height, height: context.width))
-        context.restoreGState()
+        context.draw(outputImage, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
+//        context.restoreGState()
         
         CVPixelBufferUnlockBaseAddress(pixelBuffer, [])
         
         if output == videoDataOutput {
-            print("frame captured")
             if isRecordingStarted, videoWriterInput.isReadyForMoreMediaData {
+                let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
                 //Write video buffer
-                videoWriterInput.append(sampleBuffer)
+//                videoWriterInput.append(sampleBuffer)
+                videoWriterInputPixelBufferAdaptor.append(pixelBuffer, withPresentationTime: timestamp)
             }
         }
     }
