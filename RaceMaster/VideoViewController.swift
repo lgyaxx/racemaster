@@ -248,8 +248,8 @@ class VideoViewController: UIViewController
             //Add video input
             videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: [
                 AVVideoCodecKey: AVVideoCodecType.h264,
-                AVVideoWidthKey: 640,
-                AVVideoHeightKey: 480,
+                AVVideoWidthKey: videoPreviewLayer.bounds.width - 5,
+                AVVideoHeightKey: videoPreviewLayer.bounds.height - 5,
                 AVVideoCompressionPropertiesKey: [
                     AVVideoAverageBitRateKey: 2300000,
                 ],
@@ -752,12 +752,11 @@ extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVC
         
         //Important: Correct your video orientation from your device orientation
         connection.videoOrientation = .landscapeLeft
-//        print(connection.videoOrientation.rawValue)
         
         guard isRecordingStarted, canWrite() else { return }
         
         let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
-        let attachments = CMCopyDictionaryOfAttachments(allocator: kCFAllocatorDefault, target: pixelBuffer, attachmentMode: CMAttachmentMode(kCMAttachmentMode_ShouldPropagate)) as? [CIImageOption: Any]
+//        let attachments = CMCopyDictionaryOfAttachments(allocator: kCFAllocatorDefault, target: pixelBuffer, attachmentMode: CMAttachmentMode(kCMAttachmentMode_ShouldPropagate)) as? [CIImageOption: Any]
         
 //        let ciImage = CIImage(cvImageBuffer: pixelBuffer, options: attachments)
 //
