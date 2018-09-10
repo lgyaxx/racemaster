@@ -534,7 +534,7 @@ class VideoViewController: UIViewController
             return
         }
         // Configure and start the service.
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
         locationManager.distanceFilter = kCLDistanceFilterNone
         locationManager.delegate = self
         locationManager.startUpdatingLocation()
