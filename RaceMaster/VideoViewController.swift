@@ -467,7 +467,7 @@ class VideoViewController: UIViewController
                 // Make sure the data is valid before accessing it.
                 if let validData = data {
                     // Get the attitude relative to the magnetic north reference frame.
-                    let gravity = validData.gravity
+//                    let gravity = validData.gravity
                     let acceleration = validData.userAcceleration
                     
 //                    print("Gravity: \(gravity)")
@@ -481,7 +481,7 @@ class VideoViewController: UIViewController
                     
                     
                     self.currentSpeed = tmpSpeed
-                    print("CurrentSpeed: \(self.currentSpeed)")
+//                    print("CurrentSpeed: \(self.currentSpeed)")
                     
                     self.lastSpeed = tmpSpeed
                     
