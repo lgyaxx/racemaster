@@ -6,7 +6,7 @@ import UIKit
 import AVFoundation
 import CoreLocation
 import Foundation
-import ImageIO
+import CoreMotion
 
 
 extension UIView {
@@ -107,9 +107,12 @@ class VideoViewController: UIViewController
     @IBOutlet var rawSpeed: UILabel!
     @IBOutlet var speedDisplay: UIStackView!
     @IBOutlet var speedReading: UILabel!
+    private lazy var cmManager = CMMotionManager()
     private var currentSpeed: Int = 0
     private var lastSpeed: Int = 0
     private var lastTimestamp: Date = Date()
+    private var lastAcceleration: Double = 0.0
+    private var speedLock = false
     
     private weak var timer: Timer!
     private let numberFormatter: NumberFormatter = {
@@ -245,11 +248,13 @@ class VideoViewController: UIViewController
             
             videoWriter = try AVAssetWriter(url: videoPath, fileType: AVFileType.mp4)
             
-            //Add video input
+            let videoWidth = self.view.bounds.width + 1
+            let videoHeight = ceil(videoWidth * 9.0 / 16.0)
+            //Add video input 16:9
             videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: [
                 AVVideoCodecKey: AVVideoCodecType.h264,
-                AVVideoWidthKey: videoPreviewLayer.bounds.width - 5,
-                AVVideoHeightKey: videoPreviewLayer.bounds.height - 5,
+                AVVideoWidthKey: videoWidth,
+                AVVideoHeightKey: videoHeight,
                 AVVideoCompressionPropertiesKey: [
                     AVVideoAverageBitRateKey: 2300000,
                 ],
@@ -275,8 +280,8 @@ class VideoViewController: UIViewController
             
             videoWriterInputPixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: videoWriterInput, sourcePixelBufferAttributes: [
                 kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-                kCVPixelBufferWidthKey as String: 360,
-                kCVPixelBufferHeightKey as String: 480,
+                kCVPixelBufferWidthKey as String: videoWidth,
+                kCVPixelBufferHeightKey as String: videoHeight,
                 kCVPixelFormatOpenGLESCompatibility as String: true,
                 ])
             
@@ -311,6 +316,10 @@ class VideoViewController: UIViewController
 
         pinBackground(speedDisplayBackground, to: speedDisplay)
         createStatsViews()
+        
+        Timer.scheduledTimer(withTimeInterval: 1/30, repeats: true, block: { Timer in
+            self.speedReading.text = String(self.currentSpeed)
+        })
         
         // start data flow to show preview
         self.captureSession.startRunning()
@@ -425,6 +434,8 @@ class VideoViewController: UIViewController
         
         // start location service
         initializeLocationServices()
+        
+        startQueuedUpdates()
     }
     
     private func startTimer() -> Timer
@@ -445,6 +456,41 @@ class VideoViewController: UIViewController
             }
             self.videoTimerDisplay.text = minuteString + ":" + secondString
         })
+    }
+    
+    func startQueuedUpdates() {
+        if cmManager.isDeviceMotionAvailable {
+            cmManager.deviceMotionUpdateInterval = 1 / 30
+            cmManager.showsDeviceMovementDisplay = true
+            
+            cmManager.startDeviceMotionUpdates(using: .xMagneticNorthZVertical, to: OperationQueue.main, withHandler: { (data, error) in
+                // Make sure the data is valid before accessing it.
+                if let validData = data {
+                    // Get the attitude relative to the magnetic north reference frame.
+                    let gravity = validData.gravity
+                    let acceleration = validData.userAcceleration
+                    
+//                    print("Gravity: \(gravity)")
+//                    print("Acceleration: \(acceleration)")
+//                    print("Heading \(validData.heading)")
+                    
+                    var tmpSpeed = Int(Double(self.lastSpeed) - (acceleration.z + self.lastAcceleration) / 2 * 3.6)
+                    if tmpSpeed < 0 {
+                        tmpSpeed = 0
+                    }
+                    
+                    
+                    self.currentSpeed = tmpSpeed
+                    print("CurrentSpeed: \(self.currentSpeed)")
+                    
+                    self.lastSpeed = tmpSpeed
+                    
+                    
+                    self.lastAcceleration = acceleration.z
+
+                }
+            })
+        }
     }
     
     // MARK: - Private functions to create buttons and labels
@@ -633,7 +679,6 @@ extension VideoViewController: CLLocationManagerDelegate
 {
     func locationManager(_ manager: CLLocationManager,  didUpdateLocations locations: [CLLocation]) {
         if let lastLocation = locations.last, latitudeDisplay != nil, longitudeDisplay != nil, speedDisplay != nil {
-            print(lastLocation)
             let coords = decimalCoords(toDMSFormat: lastLocation.coordinate)
             
             self.latitudeDisplay.text = coords.latitude
@@ -641,21 +686,26 @@ extension VideoViewController: CLLocationManagerDelegate
             
             var speed = lastLocation.speed < 0 ? 0 : Int(ceil(lastLocation.speed * 3.6))
             rawSpeed.backgroundColor = labelColor
-            rawSpeed.text = "Raw: " + String(lastLocation.speed * 3.6) + "km/h"
+            rawSpeed.text = "GPS Raw: " + String(lastLocation.speed * 3.6) + "km/h"
 //            speed = Int.random(in: 1...30)
             
-            currentSpeed = speed
-            
-            if lastSpeed != currentSpeed {
-                let difference = Calendar.current.dateComponents([.nanosecond], from: lastTimestamp, to: lastLocation.timestamp)
-                var interval: Double = Double(difference.nanosecond!)
-                print("time interval: \(interval)")
-                interval = interval / 2000000000.0 / Double(abs(currentSpeed - lastSpeed))
-                updateSpeedReading(interval: interval)
-            }
+
+//            currentSpeed = speed
+//
+//            if lastSpeed != currentSpeed {
+//                let difference = Calendar.current.dateComponents([.nanosecond, .second], from: lastTimestamp, to: lastLocation.timestamp)
+//                var interval: Double = Double(difference.nanosecond!)
+//
+//                print("time interval: \(interval)")
+//                interval = interval / 2000000000.0 / Double(abs(currentSpeed - lastSpeed))
+//                updateSpeedReading(interval: interval)
+//            }
             
             lastSpeed = speed
             lastTimestamp = lastLocation.timestamp
+
+            
+
         }
         else {
             print("Invalid location data.")
@@ -730,8 +780,6 @@ extension VideoViewController: CLLocationManagerDelegate
         
         let latitudeString = String(format: "%d°%d'%@''%@", abs(degree), minutes, seconds, degree >= 0 ? "N" : "S")
         
-        print("Latitude string: \(latitudeString)")
-        
         degree = Int(longitude)
         fraction = longitude.truncatingRemainder(dividingBy: 1.0)
         value = fraction * 60
@@ -740,7 +788,6 @@ extension VideoViewController: CLLocationManagerDelegate
         seconds = numberFormatter.string(from: NSNumber(value: fraction * 60)) ?? ""
         
         let longitudeString = String(format: "%d°%d'%@''%@", abs(degree), minutes, seconds, degree >= 0 ? "E" : "W")
-        print("Longitude string: \(longitudeString)")
         return (latitude: latitudeString, longitude: longitudeString)
     }
 
@@ -777,7 +824,7 @@ extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVC
 //        context.rotate(by: CGFloat(Double.pi * 90 / 180))
 //        context.translateBy(x: 0, y: -CGFloat(context.width))
 
-        let outputImage = statsView.asImage().cgImage!
+        let outputImage = self.statsView.asImage().cgImage!
 //        UIImageWriteToSavedPhotosAlbum(outputImage, nil, nil, nil)
 //        context.draw(outputImage, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
         context.draw(outputImage, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
