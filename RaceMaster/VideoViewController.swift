@@ -318,7 +318,7 @@ class VideoViewController: UIViewController
         pinBackground(speedDisplayBackground, to: speedDisplay)
         createStatsViews()
         
-        Timer.scheduledTimer(withTimeInterval: 1/10, repeats: true, block: { Timer in
+        Timer.scheduledTimer(withTimeInterval: 1/30, repeats: true, block: { Timer in
             self.speedReading.text = String(ceil(self.currentSpeed))
         })
         
