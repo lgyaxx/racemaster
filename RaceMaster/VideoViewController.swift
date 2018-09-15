@@ -92,6 +92,7 @@ class VideoViewController: UIViewController
     @IBOutlet var statsView: UIView!
     
     private var locationManager: CLLocationManager!
+    private var lastLocation: CLLocation? = nil
     private var latitudeDisplay: UILabel!
     private var longitudeDisplay: UILabel!
     private var latitudeDisplayRect: CGRect!
@@ -108,8 +109,8 @@ class VideoViewController: UIViewController
     @IBOutlet var speedDisplay: UIStackView!
     @IBOutlet var speedReading: UILabel!
     private lazy var cmManager = CMMotionManager()
-    private var currentSpeed: Int = 0
-    private var lastSpeed: Int = 0
+    private var currentSpeed: Double = 0
+    private var lastSpeed: Double = 0
     private var lastTimestamp: Date = Date()
     private var lastAcceleration: Double = 0.0
     private var speedLock = false
@@ -317,8 +318,8 @@ class VideoViewController: UIViewController
         pinBackground(speedDisplayBackground, to: speedDisplay)
         createStatsViews()
         
-        Timer.scheduledTimer(withTimeInterval: 1/30, repeats: true, block: { Timer in
-            self.speedReading.text = String(self.currentSpeed)
+        Timer.scheduledTimer(withTimeInterval: 1/10, repeats: true, block: { Timer in
+            self.speedReading.text = String(ceil(self.currentSpeed))
         })
         
         // start data flow to show preview
@@ -406,11 +407,6 @@ class VideoViewController: UIViewController
         latitudeDisplay = createLatitudeDisplay()
         longitudeDisplay = createLongitudeDisplay()
         speedDisplay = createSpeedDisplay()
-    
-        // create a dedicated view to contain all stats labels
-//        statsView = UIView(frame: UIScreen.main.bounds)
-        // statsView has tranparent background
-//        statsView.backgroundColor = UIColor.orange
         
         statsView.addSubview(latitudeDisplay)
         statsView.addSubview(longitudeDisplay)
@@ -461,35 +457,32 @@ class VideoViewController: UIViewController
     func startQueuedUpdates() {
         if cmManager.isDeviceMotionAvailable {
             cmManager.deviceMotionUpdateInterval = 1 / 30
-            cmManager.showsDeviceMovementDisplay = true
+            cmManager.showsDeviceMovementDisplay = false
             
-            cmManager.startDeviceMotionUpdates(using: .xMagneticNorthZVertical, to: OperationQueue.main, withHandler: { (data, error) in
+            cmManager.startDeviceMotionUpdates(using: .xMagneticNorthZVertical)
                 // Make sure the data is valid before accessing it.
-                if let validData = data {
-                    // Get the attitude relative to the magnetic north reference frame.
-//                    let gravity = validData.gravity
-                    let acceleration = validData.userAcceleration
-                    
-//                    print("Gravity: \(gravity)")
-//                    print("Acceleration: \(acceleration)")
-//                    print("Heading \(validData.heading)")
-                    
-                    var tmpSpeed = Int(Double(self.lastSpeed) - (acceleration.z + self.lastAcceleration) / 2 * 3.6)
-                    if tmpSpeed < 0 {
-                        tmpSpeed = 0
-                    }
-                    
-                    
-                    self.currentSpeed = tmpSpeed
-//                    print("CurrentSpeed: \(self.currentSpeed)")
-                    
-                    self.lastSpeed = tmpSpeed
-                    
-                    
-                    self.lastAcceleration = acceleration.z
-
-                }
-            })
+//                if let validData = data {
+//                    // Get the attitude relative to the magnetic north reference frame.
+////                    let gravity = validData.gravity
+//                    let acceleration = validData.userAcceleration
+//
+////                    print("Gravity: \(gravity)")
+////                    print("Acceleration: \(acceleration)")
+////                    print("Heading \(validData.heading)")
+//
+//                    let deltaSpeed = -(acceleration.z + self.lastAcceleration) / 2 * (1/30) * 3.6
+//                    var tmpSpeed = self.lastSpeed + deltaSpeed
+//                    if tmpSpeed < 0 {
+//                        tmpSpeed = 0
+//                    }
+//
+//
+//                    self.currentSpeed = tmpSpeed
+////                    print("CurrentSpeed: \(self.currentSpeed)")
+//
+//                    self.lastAcceleration = acceleration.z
+//                }
+//            })
         }
     }
     
@@ -677,38 +670,50 @@ extension VideoViewController: AVCaptureFileOutputRecordingDelegate
 
 extension VideoViewController: CLLocationManagerDelegate
 {
-    func locationManager(_ manager: CLLocationManager,  didUpdateLocations locations: [CLLocation]) {
-        if let lastLocation = locations.last, latitudeDisplay != nil, longitudeDisplay != nil, speedDisplay != nil {
+    func locationManager(_ manager: CLLocationManager,  didUpdateLocations locations: [CLLocation])
+    {
+        if let lastLocation = locations.last {
+            lastSpeed = lastLocation.speed < 0 ? 0 : lastLocation.speed * 3.6
+            
+            if let motion = cmManager.deviceMotion {
+                let difference = Calendar.current.dateComponents([.nanosecond, .second], from: lastTimestamp, to: lastLocation.timestamp)
+                lastTimestamp = lastLocation.timestamp
+                
+                let acceleration = motion.userAcceleration.z
+                let deltaSpeed = -(acceleration + lastAcceleration) / 2 * Double(difference.second!) * 3.6
+                print("delta spd: \(deltaSpeed)")
+                var tmpSpeed = self.lastSpeed + deltaSpeed
+                if tmpSpeed < 0 {
+                    tmpSpeed = 0
+                }
+                currentSpeed = tmpSpeed
+                lastAcceleration = acceleration
+            }
+            rawSpeed.backgroundColor = labelColor
+            rawSpeed.text = "GPS Raw: " + String(lastSpeed) + "km/h"
+            
+            
+            
+            
             let coords = decimalCoords(toDMSFormat: lastLocation.coordinate)
             
             self.latitudeDisplay.text = coords.latitude
             self.longitudeDisplay.text = coords.longitude
             
-            var speed = lastLocation.speed < 0 ? 0 : Int(ceil(lastLocation.speed * 3.6))
-            rawSpeed.backgroundColor = labelColor
-            rawSpeed.text = "GPS Raw: " + String(lastLocation.speed * 3.6) + "km/h"
-//            speed = Int.random(in: 1...30)
+
+    //            speed = Int.random(in: 1...30)
             
 
-//            currentSpeed = speed
-//
-//            if lastSpeed != currentSpeed {
-//                let difference = Calendar.current.dateComponents([.nanosecond, .second], from: lastTimestamp, to: lastLocation.timestamp)
-//                var interval: Double = Double(difference.nanosecond!)
-//
-//                print("time interval: \(interval)")
-//                interval = interval / 2000000000.0 / Double(abs(currentSpeed - lastSpeed))
-//                updateSpeedReading(interval: interval)
-//            }
-            
-            lastSpeed = speed
-            lastTimestamp = lastLocation.timestamp
+    //            currentSpeed = speed
+    //
+    //            if lastSpeed != currentSpeed {
 
+    //
+    //                print("time interval: \(interval)")
+    //                interval = interval / 2000000000.0 / Double(abs(currentSpeed - lastSpeed))
+    //                updateSpeedReading(interval: interval)
+    //            }
             
-
-        }
-        else {
-            print("Invalid location data.")
         }
     }
     
@@ -725,28 +730,28 @@ extension VideoViewController: CLLocationManagerDelegate
         stackView.insertSubview(view, at: 0)
         view.pin(to: stackView)
     }
-    
-    private func updateSpeedReading(interval: Double)
-    {
-        let changeFrom = lastSpeed
-        let changeTo = currentSpeed
-
-        let nextUpdate: [String: Any] = ["changeTo": speedChangeFunc(changeFrom, changeTo), "until": changeTo, "interval": interval]
-        Timer.scheduledTimer(timeInterval: interval, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
-    }
-    
-    @objc private func updateSpeed(_ timer: Timer)
-    {
-        var nextUpdate = timer.userInfo as! [String: Any]
-        if let until = nextUpdate["until"] as? Int, let changeTo = nextUpdate["changeTo"] as? Int, self.currentSpeed == until, let interval = nextUpdate["interval"] as? Double { // new speed update hasn't occured, continue updating
-            speedReading.text = String(changeTo)
-            lastSpeed = changeTo
-            if changeTo != until {
-                nextUpdate["changeTo"] = speedChangeFunc(changeTo, until)
-                Timer.scheduledTimer(timeInterval: interval, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
-            }
-        }
-    }
+//
+//    private func updateSpeedReading(interval: Double)
+//    {
+//        let changeFrom = lastSpeed
+//        let changeTo = currentSpeed
+//
+//        let nextUpdate: [String: Any] = ["changeTo": speedChangeFunc(changeFrom, changeTo), "until": changeTo, "interval": interval]
+//        Timer.scheduledTimer(timeInterval: interval, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
+//    }
+//
+//    @objc private func updateSpeed(_ timer: Timer)
+//    {
+//        var nextUpdate = timer.userInfo as! [String: Any]
+//        if let until = nextUpdate["until"] as? Int, let changeTo = nextUpdate["changeTo"] as? Int, self.currentSpeed == until, let interval = nextUpdate["interval"] as? Double { // new speed update hasn't occured, continue updating
+//            speedReading.text = String(changeTo)
+//            lastSpeed = changeTo
+//            if changeTo != until {
+//                nextUpdate["changeTo"] = speedChangeFunc(changeTo, until)
+//                Timer.scheduledTimer(timeInterval: interval, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
+//            }
+//        }
+//    }
     
     // digits will be of format [1: 0, 2: 1, 3:5, ...]
     private func getDigits(_ speed: Int) -> [Int: Int]
