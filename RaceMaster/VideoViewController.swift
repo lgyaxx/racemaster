@@ -701,7 +701,7 @@ extension VideoViewController: CLLocationManagerDelegate
                     continue
                 }
                 else {
-                    deltaSpeed += acData.acceleration * deviceMotionRefreshInterval
+                    deltaSpeed += acData.acceleration * deviceMotionRefreshInterval * 3.6
                 }
             }
             accelerationTimelines = []
