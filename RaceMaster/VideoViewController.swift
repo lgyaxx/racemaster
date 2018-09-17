@@ -114,6 +114,9 @@ class VideoViewController: UIViewController
     private var lastTimestamp: Date = Date()
     private var lastAcceleration: Double = 0.0
     private var speedLock = false
+    private let speedDisplayRefreshInterval: Double = 1 / 10
+    private let deviceMotionRefreshInterval: Double = 1 / 30
+    private lazy var accelerationTimelines = [(date: Date, acceleration: Double)]()
     
     private weak var timer: Timer!
     private let numberFormatter: NumberFormatter = {
@@ -318,8 +321,11 @@ class VideoViewController: UIViewController
         pinBackground(speedDisplayBackground, to: speedDisplay)
         createStatsViews()
         
-        Timer.scheduledTimer(withTimeInterval: 1/30, repeats: true, block: { Timer in
+        Timer.scheduledTimer(withTimeInterval: speedDisplayRefreshInterval, repeats: true, block: { Timer in
+            //TODO: UPDATE SPEED
+
             self.speedReading.text = String(ceil(self.currentSpeed))
+
         })
         
         // start data flow to show preview
@@ -456,22 +462,21 @@ class VideoViewController: UIViewController
     
     func startQueuedUpdates() {
         if cmManager.isDeviceMotionAvailable {
-            cmManager.deviceMotionUpdateInterval = 1 / 30
+            cmManager.deviceMotionUpdateInterval = deviceMotionRefreshInterval
             cmManager.showsDeviceMovementDisplay = false
             
-            cmManager.startDeviceMotionUpdates(using: .xMagneticNorthZVertical)
+            cmManager.startDeviceMotionUpdates(using: .xMagneticNorthZVertical, to: OperationQueue.main, withHandler: { (data, error) in
                 // Make sure the data is valid before accessing it.
-//                if let validData = data {
-//                    // Get the attitude relative to the magnetic north reference frame.
-////                    let gravity = validData.gravity
-//                    let acceleration = validData.userAcceleration
-//
-////                    print("Gravity: \(gravity)")
-////                    print("Acceleration: \(acceleration)")
-////                    print("Heading \(validData.heading)")
-//
-//                    let deltaSpeed = -(acceleration.z + self.lastAcceleration) / 2 * (1/30) * 3.6
+                if let validData = data {
+                    // Get the attitude relative to the magnetic north reference frame.
+                    let acceleration = validData.userAcceleration
+                    
+                    self.accelerationTimelines.append((Date(), -acceleration.z))
+                    
+                    
+//                    let deltaSpeed = self.lastAcceleration * self.deviceMotionRefreshInterval * 3.6
 //                    var tmpSpeed = self.lastSpeed + deltaSpeed
+//
 //                    if tmpSpeed < 0 {
 //                        tmpSpeed = 0
 //                    }
@@ -480,9 +485,9 @@ class VideoViewController: UIViewController
 //                    self.currentSpeed = tmpSpeed
 ////                    print("CurrentSpeed: \(self.currentSpeed)")
 //
-//                    self.lastAcceleration = acceleration.z
-//                }
-//            })
+//                    self.lastAcceleration = -acceleration.z
+                }
+            })
         }
     }
     
@@ -675,25 +680,39 @@ extension VideoViewController: CLLocationManagerDelegate
         if let lastLocation = locations.last {
             lastSpeed = lastLocation.speed < 0 ? 0 : lastLocation.speed * 3.6
             
-            if let motion = cmManager.deviceMotion {
-                let difference = Calendar.current.dateComponents([.nanosecond, .second], from: lastTimestamp, to: lastLocation.timestamp)
-                lastTimestamp = lastLocation.timestamp
-                
-                let acceleration = motion.userAcceleration.z
-                let deltaSpeed = -(acceleration + lastAcceleration) / 2 * Double(difference.second!) * 3.6
-                print("delta spd: \(deltaSpeed)")
-                var tmpSpeed = self.lastSpeed + deltaSpeed
-                if tmpSpeed < 0 {
-                    tmpSpeed = 0
+//            if let motion = cmManager.deviceMotion {
+//                let difference = Calendar.current.dateComponents([.nanosecond, .second], from: lastTimestamp, to: lastLocation.timestamp)
+//                lastTimestamp = lastLocation.timestamp
+//
+//                let acceleration = -motion.userAcceleration.z
+//                let deltaSpeed = acceleration * Double(difference.second!) * 3.6
+//                print("delta spd: \(deltaSpeed)")
+//                var tmpSpeed = self.lastSpeed + deltaSpeed
+//                if tmpSpeed < 0 {
+//                    tmpSpeed = 0
+//                }
+//                currentSpeed = tmpSpeed
+//                lastAcceleration = acceleration
+//            }
+            
+            var deltaSpeed = 0.0
+            for acData in accelerationTimelines {
+                if lastLocation.timestamp < acData.date {
+                    continue
                 }
-                currentSpeed = tmpSpeed
-                lastAcceleration = acceleration
+                else {
+                    deltaSpeed += acData.acceleration * deviceMotionRefreshInterval
+                }
             }
+            accelerationTimelines = []
+            currentSpeed = lastSpeed + deltaSpeed
+            if currentSpeed < 0 {
+                currentSpeed = 0
+            }
+            print("DeltaSpeed: \(deltaSpeed)")
+            
             rawSpeed.backgroundColor = labelColor
             rawSpeed.text = "GPS Raw: " + String(lastSpeed) + "km/h"
-            
-            
-            
             
             let coords = decimalCoords(toDMSFormat: lastLocation.coordinate)
             
@@ -702,8 +721,7 @@ extension VideoViewController: CLLocationManagerDelegate
             
 
     //            speed = Int.random(in: 1...30)
-            
-
+        
     //            currentSpeed = speed
     //
     //            if lastSpeed != currentSpeed {
