@@ -51,7 +51,7 @@ extension UIView {
 
 class VideoViewController: UIViewController
 {
-    // MARK: - Variables
+    // MARK: - Video related controls
     private var isRecordingStarted = false
     
     private var captureSession: AVCaptureSession!
@@ -68,6 +68,34 @@ class VideoViewController: UIViewController
     fileprivate lazy var bitmapInfo = CGBitmapInfo.byteOrder32Little.union(CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipFirst.rawValue))
     
     private lazy var tmpContext = CIContext(options: nil)
+    
+    private let videoPath: URL = {
+        // set up output file name
+        let documentDirectories = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let documentDirectory = documentDirectories.first!
+        let uniqueName = UUID().uuidString + ".mp4"
+        let videoPath = documentDirectory.appendingPathComponent(uniqueName)
+        
+        // remove file with the same name
+        try? FileManager.default.removeItem(at: videoPath)
+        return videoPath
+    } ()
+    
+    // MARK: Device Orientation
+    override var shouldAutorotate: Bool
+    {
+        return false
+    }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask
+    {
+        return .landscapeLeft
+    }
+    
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation
+    {
+        return .landscapeLeft
+    }
+    
     
     private let labelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
     
@@ -97,6 +125,7 @@ class VideoViewController: UIViewController
     private var longitudeDisplay: UILabel!
     private var latitudeDisplayRect: CGRect!
     
+    // MARK: - speed related controls
     private lazy var speedDisplayBackground: UIView = {
         let view = UIView()
         view.backgroundColor = labelColor
@@ -108,15 +137,20 @@ class VideoViewController: UIViewController
     @IBOutlet var rawSpeed: UILabel!
     @IBOutlet var speedDisplay: UIStackView!
     @IBOutlet var speedReading: UILabel!
+    @IBOutlet var throttleIndicator: UIImageView!
+    @IBOutlet var brakeIndicator: UIImageView!
+    private lazy var throttleActive = false
+    private lazy var brakeActive = false
     private lazy var cmManager = CMMotionManager()
     private var currentSpeed: Double = 0
     private var lastSpeed: Double = 0
     private var lastTimestamp: Date = Date()
     private var lastAcceleration: Double = 0.0
     private var speedLock = false
-    private let speedDisplayRefreshInterval: Double = 1 / 10
+    private let speedDisplayRefreshInterval: Double = 1 / 15
     private let deviceMotionRefreshInterval: Double = 1 / 30
     private lazy var accelerationTimelines = [(date: Date, acceleration: Double)]()
+    
     
     private weak var timer: Timer!
     private let numberFormatter: NumberFormatter = {
@@ -124,32 +158,7 @@ class VideoViewController: UIViewController
         formatter.maximumFractionDigits = 2
         return formatter
     } ()
-    private let videoPath: URL = {
-        // set up output file name
-        let documentDirectories = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        let documentDirectory = documentDirectories.first!
-        let uniqueName = UUID().uuidString + ".mp4"
-        let videoPath = documentDirectory.appendingPathComponent(uniqueName)
-        
-        // remove file with the same name
-        try? FileManager.default.removeItem(at: videoPath)
-        return videoPath
-    } ()
-    // MARK: Device Orientation
-    override var shouldAutorotate: Bool
-    {
-        return false
-    }
-    override var supportedInterfaceOrientations: UIInterfaceOrientationMask
-    {
-        return .landscapeLeft
-    }
-    
-    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation
-    {
-        return .landscapeLeft
-    }
-   
+
     
     // MARK: - Set up capture session
     
@@ -322,10 +331,22 @@ class VideoViewController: UIViewController
         createStatsViews()
         
         Timer.scheduledTimer(withTimeInterval: speedDisplayRefreshInterval, repeats: true, block: { Timer in
-            //TODO: UPDATE SPEED
-
             self.speedReading.text = String(ceil(self.currentSpeed))
-
+            
+            //update throttle and brake indicator
+            if self.throttleActive {
+                self.throttleIndicator.image = UIImage(named: "throttle-active")
+            }
+            else {
+                self.throttleIndicator.image = UIImage(named: "throttle-inactive")
+            }
+            
+            if self.brakeActive {
+                self.brakeIndicator.image = UIImage(named: "brake-active")
+            }
+            else {
+                self.brakeIndicator.image = UIImage(named: "brake-inactive")
+            }
         })
         
         // start data flow to show preview
@@ -471,21 +492,25 @@ class VideoViewController: UIViewController
                     // Get the attitude relative to the magnetic north reference frame.
                     let acceleration = validData.userAcceleration
                     
+                    print("User acceleration: \(acceleration)")
+                    print("Gravity: \(validData.gravity)")
+                    
                     self.accelerationTimelines.append((Date(), -acceleration.z))
                     
-                    
-//                    let deltaSpeed = self.lastAcceleration * self.deviceMotionRefreshInterval * 3.6
-//                    var tmpSpeed = self.lastSpeed + deltaSpeed
-//
-//                    if tmpSpeed < 0 {
-//                        tmpSpeed = 0
+//                    if acceleration.z < 0 { // accelerating
+//                        self.throttleActive = true
+//                        self.brakeActive = false
+//                    }
+//                    else if acceleration.z > 0 { // decelerating
+//                        self.brakeActive = true
+//                        self.throttleActive = false
+//                    }
+//                    else {
+//                        self.brakeActive = false
+//                        self.throttleActive = false
 //                    }
 //
-//
-//                    self.currentSpeed = tmpSpeed
-////                    print("CurrentSpeed: \(self.currentSpeed)")
-//
-//                    self.lastAcceleration = -acceleration.z
+//                    self.lastAcceleration = acceleration.z
                 }
             })
         }
@@ -696,20 +721,31 @@ extension VideoViewController: CLLocationManagerDelegate
 //            }
             
             var deltaSpeed = 0.0
-            for acData in accelerationTimelines {
+            let accTimelinesCopy = accelerationTimelines
+            accelerationTimelines = []
+            for acData in accTimelinesCopy {
                 if lastLocation.timestamp < acData.date {
                     continue
                 }
                 else {
-                    deltaSpeed += acData.acceleration * deviceMotionRefreshInterval * 3.6
+                    deltaSpeed += acData.acceleration * deviceMotionRefreshInterval * 9.8 * 3.6
                 }
             }
-            accelerationTimelines = []
             currentSpeed = lastSpeed + deltaSpeed
             if currentSpeed < 0 {
                 currentSpeed = 0
             }
             print("DeltaSpeed: \(deltaSpeed)")
+            
+            if deltaSpeed >= 0 {
+                self.throttleActive = true
+                self.brakeActive = false
+            }
+            
+            else {
+                self.throttleActive = false
+                self.brakeActive = true
+            }
             
             rawSpeed.backgroundColor = labelColor
             rawSpeed.text = "GPS Raw: " + String(lastSpeed) + "km/h"

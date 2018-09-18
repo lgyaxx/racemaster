@@ -135,9 +135,27 @@
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
+                                    <imageView userInteractionEnabled="NO" alpha="0.5" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="kUy-OG-Lex" userLabel="throttle">
+                                        <rect key="frame" x="478.33333333333331" y="284" width="25" height="75"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="75" id="0Zx-B5-byG"/>
+                                            <constraint firstAttribute="width" constant="25" id="yOz-JN-dtx"/>
+                                        </constraints>
+                                    </imageView>
+                                    <imageView autoresizesSubviews="NO" userInteractionEnabled="NO" alpha="0.5" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="YWJ-Ap-8TG" userLabel="brake">
+                                        <rect key="frame" x="244.66666666666663" y="284" width="25" height="75"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="25" id="6yW-t6-cpc"/>
+                                            <constraint firstAttribute="height" constant="75" id="a9v-5Q-uJV"/>
+                                        </constraints>
+                                    </imageView>
                                 </subviews>
                                 <constraints>
+                                    <constraint firstAttribute="bottom" secondItem="YWJ-Ap-8TG" secondAttribute="bottom" constant="16" id="8kI-n0-bRK"/>
                                     <constraint firstItem="1EY-2z-Ig6" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="V6R-Qe-02i"/>
+                                    <constraint firstItem="kUy-OG-Lex" firstAttribute="leading" secondItem="33q-YP-dLH" secondAttribute="trailing" constant="70" id="Wnn-VI-hpq"/>
+                                    <constraint firstAttribute="bottom" secondItem="kUy-OG-Lex" secondAttribute="bottom" constant="16" id="X0u-Rc-8sg"/>
+                                    <constraint firstItem="Kdv-2T-5bi" firstAttribute="leading" secondItem="YWJ-Ap-8TG" secondAttribute="trailing" constant="70" id="pnc-lu-lFQ"/>
                                     <constraint firstItem="1EY-2z-Ig6" firstAttribute="top" secondItem="33q-YP-dLH" secondAttribute="bottom" constant="15.333333333333314" id="r9j-My-Del"/>
                                     <constraint firstItem="Kdv-2T-5bi" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="rJB-Md-Gmo"/>
                                     <constraint firstItem="Kdv-2T-5bi" firstAttribute="centerY" secondItem="xc2-kW-lE5" secondAttribute="centerY" id="x7U-7e-aMq"/>
@@ -156,10 +174,12 @@
                         <viewLayoutGuide key="safeArea" id="tw2-S9-AhZ"/>
                     </view>
                     <connections>
+                        <outlet property="brakeIndicator" destination="YWJ-Ap-8TG" id="Y0x-Ug-bGE"/>
                         <outlet property="rawSpeed" destination="1EY-2z-Ig6" id="h0f-zw-z73"/>
                         <outlet property="speedDisplay" destination="Kdv-2T-5bi" id="ORJ-o7-vWV"/>
                         <outlet property="speedReading" destination="QdD-kj-Pda" id="OFY-tL-6Ud"/>
                         <outlet property="statsView" destination="xc2-kW-lE5" id="uCw-rK-zcn"/>
+                        <outlet property="throttleIndicator" destination="kUy-OG-Lex" id="HFR-bg-5cV"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="41K-qd-UfV" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -259,4 +279,7 @@
             <point key="canvasLocation" x="-922.39999999999998" y="-120.44334975369459"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="throttle-inactive" width="100" height="100"/>
+    </resources>
 </document>
