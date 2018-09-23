@@ -558,108 +558,113 @@ class VideoViewController: UIViewController
                     }
                     self.currentSpeed = self.currentSpeed + deltaSpeed
                     
-                    
-                    //speed strip update
-                    let offset = -CGFloat(deltaSpeed / self.speedStripRangeMax) * self.speedStripWidth
-
-                    if deltaSpeed > 0
-                    {
-                        //we need to put newly added speed labels in a separate array and adjust offsets in current thread
-                        var newlyAdded = [UILabel]()
-
-                        for label in self.speedStripStack
-                        {
-                            let labelX = label.frame.origin.x
-
-                            if labelX + self.speedLabelWidth + offset < self.speedStripLeftBound
-                            {
-                                //animation to move left & fadeOut
-                                UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
-                                    label.alpha = 0
-                                    label.frame.origin.x = self.speedStripLeftBound
-
-                                }, completion: { (complete) in
-                                    label.removeFromSuperview()
-
-                                    //insert label from end
-                                    let frame = CGRect(x: self.speedStripStack.last!.frame.origin.x + self.speedLabelWidth, y: self.speedStripStackY, width: self.speedLabelWidth, height: self.speedLabelHeight)
-                                    let newLabel = UILabel(frame: frame)
-                                    newLabel.font = self.speedStripMarkFont
-                                    newLabel.textAlignment = .center
-                                    newLabel.backgroundColor = self.labelColor
-                                    let numLabels = self.speedStripStack.count
-                                    let lastLabel = self.speedStripStack[numLabels - 1]
-                                    newLabel.text = String(Int(lastLabel.text!)! + 5)
-                                    self.speedStripStack.removeFirst()
-                                    self.speedStripStack.append(newLabel)
-                                    self.statsView.addSubview(newLabel)
-                                    newlyAdded.append(newLabel)
-                                })
-                            }
-                            else {
-                                UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
-                                    label.frame.origin.x += offset
-                                })
-                            }
-                        }
-
-                        //Important! Otherwise there would be a gap between newly inserted label and original ones
-                        for label in newlyAdded
-                        {
-                            UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
-                                label.frame.origin.x += offset
-                            })
-                        }
-                    }
-                    else if deltaSpeed < 0
-                    {
-                        var newlyAdded = [UILabel]()
-
-                        //use speedStripStack.reversed() to deal with boundary cases first!
-                        for label in self.speedStripStack.reversed()
-                        {
-                            let labelX = label.frame.origin.x
-
-                            if labelX + offset > self.speedStripRightBound
-                            {
-                                //animation to move left & fadeOut
-                                UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
-                                    label.alpha = 0
-                                    label.frame.origin.x = self.speedStripRightBound - self.speedLabelWidth
-
-                                }, completion: { (complete) in
-                                    label.removeFromSuperview()
-
-                                    //insert label from front
-                                    let frame = CGRect(x: self.speedStripStack.first!.frame.origin.x - self.speedLabelWidth, y: self.speedStripStackY, width: self.speedLabelWidth, height: self.speedLabelHeight)
-                                    let newLabel = UILabel(frame: frame)
-                                    newLabel.font = self.speedStripMarkFont
-                                    newLabel.textAlignment = .center
-                                    newLabel.backgroundColor = self.labelColor
-                                    let firstLabel = self.speedStripStack[0]
-                                    if let spdText = firstLabel.text, let firstLabelSpeed: Int = Int(spdText), (firstLabelSpeed - 5) < 0 {
-                                        newLabel.text = String(firstLabelSpeed)
-                                    }
-                                    self.speedStripStack.removeLast()
-                                    self.speedStripStack.insert(newLabel, at: 0)
-                                    self.statsView.addSubview(newLabel)
-                                    newlyAdded.append(newLabel)
-                                })
-                            }
-                            else {
-                                label.frame.origin.x += offset
-                            }
-                        }
-
-                        for label in newlyAdded {
-                            label.frame.origin.x += offset
-                        }
-                    }
+                    self.speedStripUpdate(deltaSpeed)
                 }
             })
         }
     }
     
+    private func speedStripUpdate(_ deltaSpeed: Double)
+    {
+        //speed strip update
+        let offset = -CGFloat(deltaSpeed / self.speedStripRangeMax) * self.speedStripWidth
+        
+        if deltaSpeed > 0
+        {
+            //we need to put newly added speed labels in a separate array and adjust offsets in current thread
+            var newlyAdded = [UILabel]()
+            
+            for label in self.speedStripStack
+            {
+                let labelX = label.frame.origin.x
+                
+                if labelX + self.speedLabelWidth + offset < self.speedStripLeftBound
+                {
+                    //animation to move left & fadeOut
+                    UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
+                        label.alpha = 0
+                        label.frame.origin.x = self.speedStripLeftBound
+                        
+                    }, completion: { (complete) in
+                        label.removeFromSuperview()
+                        
+                        //insert label from end
+                        let frame = CGRect(x: self.speedStripStack.last!.frame.origin.x + self.speedLabelWidth, y: self.speedStripStackY, width: self.speedLabelWidth, height: self.speedLabelHeight)
+                        let newLabel = UILabel(frame: frame)
+                        newLabel.font = self.speedStripMarkFont
+                        newLabel.textAlignment = .center
+                        newLabel.backgroundColor = self.labelColor
+                        let numLabels = self.speedStripStack.count
+                        let lastLabel = self.speedStripStack[numLabels - 1]
+                        newLabel.text = String(Int(lastLabel.text!)! + 5)
+                        self.speedStripStack.removeFirst()
+                        self.speedStripStack.append(newLabel)
+                        self.statsView.addSubview(newLabel)
+                        newlyAdded.append(newLabel)
+                    })
+                }
+                else {
+                    UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
+                        label.frame.origin.x += offset
+                    })
+                }
+            }
+            
+            //Important! Otherwise there would be a gap between newly inserted label and original ones
+            for label in newlyAdded
+            {
+                UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
+                    label.frame.origin.x += offset
+                })
+            }
+        }
+        else if deltaSpeed < 0
+        {
+            var newlyAdded = [UILabel]()
+            
+            //use speedStripStack.reversed() to deal with boundary cases first!
+            for label in self.speedStripStack.reversed()
+            {
+                let labelX = label.frame.origin.x
+                
+                if labelX + offset > self.speedStripRightBound
+                {
+                    //animation to move left & fadeOut
+                    UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
+                        label.alpha = 0
+                        label.frame.origin.x = self.speedStripRightBound - self.speedLabelWidth
+                        
+                    }, completion: { (complete) in
+                        label.removeFromSuperview()
+                        
+                        //insert label from front
+                        let frame = CGRect(x: self.speedStripStack.first!.frame.origin.x - self.speedLabelWidth, y: self.speedStripStackY, width: self.speedLabelWidth, height: self.speedLabelHeight)
+                        let newLabel = UILabel(frame: frame)
+                        newLabel.font = self.speedStripMarkFont
+                        newLabel.textAlignment = .center
+                        newLabel.backgroundColor = self.labelColor
+                        let firstLabel = self.speedStripStack[0]
+                        if let spdText = firstLabel.text, let firstLabelSpeed: Int = Int(spdText), (firstLabelSpeed - 5) < 0 {
+                            newLabel.text = String(firstLabelSpeed)
+                        }
+                        self.speedStripStack.removeLast()
+                        self.speedStripStack.insert(newLabel, at: 0)
+                        self.statsView.addSubview(newLabel)
+                        newlyAdded.append(newLabel)
+                    })
+                }
+                else {
+                    label.frame.origin.x += offset
+                }
+            }
+            
+            for label in newlyAdded {
+                label.frame.origin.x += offset
+            }
+        }
+        
+    }
+        
     // MARK: - Private functions to create buttons and labels
     // Helper function to create a video control button
     private func createControlButton(origin: CGPoint, size: CGSize,  backgroundImage resourceName: String) -> UIButton
