@@ -98,6 +98,7 @@ class VideoViewController: UIViewController
     
     
     private let labelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
+    private let labelColorBgBlue = UIColor(red: 45.0/255.0, green: 158.0/255.0, blue: 255.0/255.0, alpha: 0.8)
     
     private var videoPreviewView: VideoPreviewView!
     private var videoPreviewLayer: AVCaptureVideoPreviewLayer!
@@ -487,7 +488,8 @@ class VideoViewController: UIViewController
             let frame = CGRect(x: speedLabelOffsetX, y: speedStripStackY, width: speedLabelWidth, height: speedLabelHeight)
             let label = UILabel(frame: frame)
             label.textAlignment = .center
-            label.backgroundColor = labelColor
+            label.backgroundColor = labelColorBgBlue
+            label.textColor = UIColor.white
             label.font = speedStripMarkFont
 //            label.layer.borderColor = UIColor.orange.cgColor
 //            label.layer.borderWidth = 2.0
@@ -615,7 +617,8 @@ class VideoViewController: UIViewController
                         let newLabel = UILabel(frame: frame)
                         newLabel.font = self.speedStripMarkFont
                         newLabel.textAlignment = .center
-                        newLabel.backgroundColor = self.labelColor
+                        newLabel.backgroundColor = self.labelColorBgBlue
+                        newLabel.textColor = UIColor.white
                         let numLabels = self.speedStripStack.count
                         let lastLabel = self.speedStripStack[numLabels - 1]
                         newLabel.text = String(Int(lastLabel.text!)! + 5)
@@ -664,7 +667,8 @@ class VideoViewController: UIViewController
                         let newLabel = UILabel(frame: frame)
                         newLabel.font = self.speedStripMarkFont
                         newLabel.textAlignment = .center
-                        newLabel.backgroundColor = self.labelColor
+                        newLabel.backgroundColor = self.labelColorBgBlue
+                        newLabel.textColor = UIColor.white
                         let firstLabel = self.speedStripStack[0]
                         if let spdText = firstLabel.text, let firstLabelSpeed: Int = Int(spdText), (firstLabelSpeed - 5) < 0 {
                             newLabel.text = String(firstLabelSpeed)
