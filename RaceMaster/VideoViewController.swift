@@ -159,6 +159,7 @@ class VideoViewController: UIViewController
     @IBOutlet var brakeIndicator: UIImageView!
     private lazy var throttleActive = false
     private lazy var brakeActive = false
+    private lazy var brakeAmber = false
     private lazy var cmManager = CMMotionManager()
     private var currentSpeed: Double = 0
     private var lastSpeed: Double = 0
@@ -361,13 +362,19 @@ class VideoViewController: UIViewController
             }
             
             if self.brakeActive {
-                self.brakeIndicator.image = UIImage(named: "brake-active")
+                if self.brakeAmber {
+                    self.brakeIndicator.image = UIImage(named: "brake-amber")
+                }
+                else {
+                    self.brakeIndicator.image = UIImage(named: "brake-red")
+                }
             }
             else {
                 self.brakeIndicator.image = UIImage(named: "brake-inactive")
             }
             
             
+        
         })
 
         
@@ -537,30 +544,45 @@ class VideoViewController: UIViewController
                     
                     self.accelerationTimelines.append((Date(), -acceleration.z))
                     
-//                    if acceleration.z < 0 { // accelerating
-//                        self.throttleActive = true
-//                        self.brakeActive = false
-//                    }
-//                    else if acceleration.z > 0 { // decelerating
-//                        self.brakeActive = true
-//                        self.throttleActive = false
-//                    }
-//                    else {
-//                        self.brakeActive = false
-//                        self.throttleActive = false
-//                    }
-//
-//                    self.lastAcceleration = acceleration.z
-                    
+                    //calculate instant delta speed for later usage
                     var deltaSpeed = -acceleration.z * self.deviceMotionRefreshInterval * 9.8 * 3.6
+                    
+                    //update throttle and brake indication according to deltaSpeed
+                    self.brakeAndThrottleUpdate(deltaSpeed)
+
                     if self.currentSpeed + deltaSpeed < 0 {
+                        //important to adjust deltaSpeed for speed strip calculation
                         deltaSpeed = -self.currentSpeed
                     }
+                    //update current speed
                     self.currentSpeed = self.currentSpeed + deltaSpeed
                     
                     self.speedStripUpdate(deltaSpeed)
+                    
+                    self.lastAcceleration = acceleration.z
                 }
             })
+        }
+    }
+    
+    private func brakeAndThrottleUpdate(_ deltaSpeed: Double)
+    {
+        if deltaSpeed >= 0 { // throttle is pressed
+            self.throttleActive = true
+            self.brakeActive = false
+        }
+        else if deltaSpeed < -1.0 { // decelerating
+            self.brakeActive = true
+            self.throttleActive = false
+        }
+        else if deltaSpeed < -0.5 {
+            self.brakeActive = true
+            self.brakeAmber = true
+            self.throttleActive = false
+        }
+        else {
+            self.brakeActive = false
+            self.throttleActive = false
         }
     }
     
