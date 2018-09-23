@@ -107,56 +107,64 @@
                         <rect key="frame" x="0.0" y="0.0" width="812" height="375"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="xc2-kW-lE5">
+                            <view contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xc2-kW-lE5">
                                 <rect key="frame" x="0.0" y="0.0" width="768" height="375"/>
                                 <subviews>
-                                    <stackView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Kdv-2T-5bi" userLabel="Speed Labels Container">
-                                        <rect key="frame" x="339.66666666666669" y="169.33333333333334" width="88.666666666666686" height="36.333333333333343"/>
+                                    <stackView contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Kdv-2T-5bi" userLabel="Speed Labels Container">
+                                        <rect key="frame" x="334" y="172.66666666666666" width="100" height="30"/>
                                         <subviews>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QdD-kj-Pda" userLabel="Speed">
-                                                <rect key="frame" x="20" y="7.9999999999999982" width="10.333333333333336" height="20.333333333333329"/>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="0" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QdD-kj-Pda" userLabel="Speed">
+                                                <rect key="frame" x="0.0" y="0.0" width="40" height="30"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="width" constant="40" id="8NI-eU-mEJ"/>
+                                                </constraints>
                                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                 <nil key="textColor"/>
                                                 <nil key="highlightedColor"/>
                                             </label>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="km/h" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="33q-YP-dLH">
-                                                <rect key="frame" x="30.333333333333318" y="7.9999999999999982" width="38.333333333333343" height="20.333333333333329"/>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="km/h" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="33q-YP-dLH">
+                                                <rect key="frame" x="40" y="0.0" width="50" height="30"/>
                                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                 <nil key="textColor"/>
                                                 <nil key="highlightedColor"/>
                                             </label>
                                         </subviews>
-                                        <directionalEdgeInsets key="directionalLayoutMargins" top="8" leading="20" bottom="8" trailing="20"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="100" id="o22-fa-Mdc"/>
+                                            <constraint firstAttribute="height" constant="30" id="zq8-d7-yvV"/>
+                                        </constraints>
+                                        <directionalEdgeInsets key="directionalLayoutMargins" top="0.0" leading="0.0" bottom="0.0" trailing="10"/>
                                         <viewLayoutGuide key="safeArea" id="tiy-Gc-ZgY"/>
                                     </stackView>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Initially: 0" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1EY-2z-Ig6">
-                                        <rect key="frame" x="348" y="213" width="72.333333333333314" height="20.333333333333343"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <nil key="textColor"/>
-                                        <nil key="highlightedColor"/>
-                                    </label>
                                     <imageView userInteractionEnabled="NO" alpha="0.5" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="kUy-OG-Lex" userLabel="throttle">
-                                        <rect key="frame" x="478.33333333333331" y="284" width="25" height="75"/>
+                                        <rect key="frame" x="484" y="284" width="25" height="75"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="75" id="0Zx-B5-byG"/>
                                             <constraint firstAttribute="width" constant="25" id="yOz-JN-dtx"/>
                                         </constraints>
                                     </imageView>
                                     <imageView autoresizesSubviews="NO" userInteractionEnabled="NO" alpha="0.5" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="YWJ-Ap-8TG" userLabel="brake">
-                                        <rect key="frame" x="244.66666666666663" y="284" width="25" height="75"/>
+                                        <rect key="frame" x="239" y="284" width="25" height="75"/>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="25" id="6yW-t6-cpc"/>
                                             <constraint firstAttribute="height" constant="75" id="a9v-5Q-uJV"/>
                                         </constraints>
                                     </imageView>
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="triangle-indicator" translatesAutoresizingMaskIntoConstraints="NO" id="Z9i-cb-ZRg">
+                                        <rect key="frame" x="372" y="200" width="24" height="20"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="20" id="9yu-83-30h"/>
+                                            <constraint firstAttribute="width" constant="24" id="La1-3f-k6M"/>
+                                        </constraints>
+                                    </imageView>
                                 </subviews>
                                 <constraints>
+                                    <constraint firstItem="Z9i-cb-ZRg" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="57e-H8-aV6"/>
                                     <constraint firstAttribute="bottom" secondItem="YWJ-Ap-8TG" secondAttribute="bottom" constant="16" id="8kI-n0-bRK"/>
-                                    <constraint firstItem="1EY-2z-Ig6" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="V6R-Qe-02i"/>
-                                    <constraint firstItem="kUy-OG-Lex" firstAttribute="leading" secondItem="33q-YP-dLH" secondAttribute="trailing" constant="70" id="Wnn-VI-hpq"/>
+                                    <constraint firstItem="Z9i-cb-ZRg" firstAttribute="top" secondItem="Kdv-2T-5bi" secondAttribute="bottom" constant="-2.6666666666666572" id="ICS-MA-XZb"/>
+                                    <constraint firstItem="kUy-OG-Lex" firstAttribute="leading" secondItem="Kdv-2T-5bi" secondAttribute="trailing" constant="50" id="Ozp-KA-Cnt"/>
                                     <constraint firstAttribute="bottom" secondItem="kUy-OG-Lex" secondAttribute="bottom" constant="16" id="X0u-Rc-8sg"/>
                                     <constraint firstItem="Kdv-2T-5bi" firstAttribute="leading" secondItem="YWJ-Ap-8TG" secondAttribute="trailing" constant="70" id="pnc-lu-lFQ"/>
-                                    <constraint firstItem="1EY-2z-Ig6" firstAttribute="top" secondItem="33q-YP-dLH" secondAttribute="bottom" constant="15.333333333333314" id="r9j-My-Del"/>
                                     <constraint firstItem="Kdv-2T-5bi" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="rJB-Md-Gmo"/>
                                     <constraint firstItem="Kdv-2T-5bi" firstAttribute="centerY" secondItem="xc2-kW-lE5" secondAttribute="centerY" id="x7U-7e-aMq"/>
                                 </constraints>
@@ -175,9 +183,9 @@
                     </view>
                     <connections>
                         <outlet property="brakeIndicator" destination="YWJ-Ap-8TG" id="Y0x-Ug-bGE"/>
-                        <outlet property="rawSpeed" destination="1EY-2z-Ig6" id="h0f-zw-z73"/>
                         <outlet property="speedDisplay" destination="Kdv-2T-5bi" id="ORJ-o7-vWV"/>
                         <outlet property="speedReading" destination="QdD-kj-Pda" id="OFY-tL-6Ud"/>
+                        <outlet property="speedTriangleIndicator" destination="Z9i-cb-ZRg" id="eGc-B7-yml"/>
                         <outlet property="statsView" destination="xc2-kW-lE5" id="uCw-rK-zcn"/>
                         <outlet property="throttleIndicator" destination="kUy-OG-Lex" id="HFR-bg-5cV"/>
                     </connections>
@@ -281,5 +289,6 @@
     </scenes>
     <resources>
         <image name="throttle-inactive" width="100" height="100"/>
+        <image name="triangle-indicator" width="96" height="96"/>
     </resources>
 </document>
