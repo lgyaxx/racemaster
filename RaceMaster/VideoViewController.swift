@@ -476,7 +476,6 @@ class VideoViewController: UIViewController
         
         //create 10 speed marks in speedStrip
         for i in 0..<speedLabelTotal {
-            print("left bound: \(speedStripLeftBound)")
             let speedLabelOffsetX = speedStripLeftBound + CGFloat(i) * speedLabelWidth
             let frame = CGRect(x: speedLabelOffsetX, y: speedStripStackY, width: speedLabelWidth, height: speedLabelHeight)
             let label = UILabel(frame: frame)
@@ -846,11 +845,6 @@ extension VideoViewController: CLLocationManagerDelegate
                     let actualOffset = label.center.x - UIScreen.main.bounds.width / 2
 
                     adjustment = supposedOffset - actualOffset
-                    print("actualOffset \(actualOffset)")
-                    print("supposedOffset \(supposedOffset)")
-                    print("currentSpd: \(currentSpeed)")
-                    print("labelSpd: \(labelSpd)")
-                    print("adjustment: \(adjustment)")
                     break
                 }
             }
