@@ -167,7 +167,7 @@ class VideoViewController: UIViewController
     private var lastTimestamp: Date = Date()
     private var lastAcceleration: Double = 0.0
     private var speedLock = false
-    private let speedDisplayRefreshInterval: Double = 1 / 5
+    private let speedDisplayRefreshInterval: Double = 1 / 20
     private let deviceMotionRefreshInterval: Double = 1 / 30
     private lazy var accelerationTimelines = [(date: Date, acceleration: Double)]()
     
@@ -373,9 +373,6 @@ class VideoViewController: UIViewController
             else {
                 self.brakeIndicator.image = UIImage(named: "brake-inactive")
             }
-            
-            
-        
         })
 
         
@@ -482,13 +479,18 @@ class VideoViewController: UIViewController
         //add return button
         view.addSubview(returnButton)
         
+        let speedStrip = UIView(frame: CGRect(x: speedStripLeftBound - speedLabelWidth, y: speedStripStackY, width: speedStripWidth + speedLabelWidth * 2, height: speedLabelHeight))
+        
+        speedStrip.backgroundColor = labelColorBgBlue
+        statsView.addSubview(speedStrip)
+        
         //create 10 speed marks in speedStrip
         for i in 0..<speedLabelTotal {
             let speedLabelOffsetX = speedStripLeftBound + CGFloat(i) * speedLabelWidth
             let frame = CGRect(x: speedLabelOffsetX, y: speedStripStackY, width: speedLabelWidth, height: speedLabelHeight)
             let label = UILabel(frame: frame)
             label.textAlignment = .center
-            label.backgroundColor = labelColorBgBlue
+            label.backgroundColor = UIColor.clear
             label.textColor = UIColor.white
             label.font = speedStripMarkFont
 //            label.layer.borderColor = UIColor.orange.cgColor
@@ -557,7 +559,7 @@ class VideoViewController: UIViewController
                         deltaSpeed = -self.currentSpeed
                     }
                     //update current speed
-                    self.currentSpeed = self.currentSpeed + deltaSpeed
+//                    self.currentSpeed = self.currentSpeed + deltaSpeed
                     
                     self.speedStripUpdate(deltaSpeed)
                     
@@ -569,15 +571,21 @@ class VideoViewController: UIViewController
     
     private func brakeAndThrottleUpdate(_ deltaSpeed: Double)
     {
-        if deltaSpeed >= 0 { // throttle is pressed
+        if currentSpeed == 0 {
+            self.brakeActive = true
+            self.brakeAmber = false
+            self.throttleActive = false
+        }
+        else if deltaSpeed >= -0.03 { // throttle is pressed
             self.throttleActive = true
             self.brakeActive = false
         }
-        else if deltaSpeed < -1.0 { // decelerating
+        else if deltaSpeed < -0.15 { // decelerating
             self.brakeActive = true
+            self.brakeAmber = false
             self.throttleActive = false
         }
-        else if deltaSpeed < -0.5 {
+        else if deltaSpeed < -0.08 {
             self.brakeActive = true
             self.brakeAmber = true
             self.throttleActive = false
@@ -585,6 +593,7 @@ class VideoViewController: UIViewController
         else {
             self.brakeActive = false
             self.throttleActive = false
+            self.brakeAmber = false
         }
     }
     
@@ -617,30 +626,21 @@ class VideoViewController: UIViewController
                         let newLabel = UILabel(frame: frame)
                         newLabel.font = self.speedStripMarkFont
                         newLabel.textAlignment = .center
-                        newLabel.backgroundColor = self.labelColorBgBlue
+                        newLabel.backgroundColor = UIColor.clear
                         newLabel.textColor = UIColor.white
                         let numLabels = self.speedStripStack.count
                         let lastLabel = self.speedStripStack[numLabels - 1]
                         newLabel.text = String(Int(lastLabel.text!)! + 5)
+                        self.statsView.addSubview(newLabel)
                         self.speedStripStack.removeFirst()
                         self.speedStripStack.append(newLabel)
-                        self.statsView.addSubview(newLabel)
+
                         newlyAdded.append(newLabel)
                     })
                 }
-                else {
-                    UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
-                        label.frame.origin.x += offset
-                    })
-                }
             }
-            
-            //Important! Otherwise there would be a gap between newly inserted label and original ones
-            for label in newlyAdded
-            {
-                UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
-                    label.frame.origin.x += offset
-                })
+            for label in speedStripStack {
+                label.frame.origin.x += offset
             }
         }
         else if deltaSpeed < 0
@@ -667,10 +667,10 @@ class VideoViewController: UIViewController
                         let newLabel = UILabel(frame: frame)
                         newLabel.font = self.speedStripMarkFont
                         newLabel.textAlignment = .center
-                        newLabel.backgroundColor = self.labelColorBgBlue
+                        newLabel.backgroundColor = UIColor.clear
                         newLabel.textColor = UIColor.white
                         let firstLabel = self.speedStripStack[0]
-                        if let spdText = firstLabel.text, let firstLabelSpeed: Int = Int(spdText), (firstLabelSpeed - 5) < 0 {
+                        if let spdText = firstLabel.text, let firstLabelSpeed: Int = Int(spdText), (firstLabelSpeed - 5) >= 0 {
                             newLabel.text = String(firstLabelSpeed)
                         }
                         self.speedStripStack.removeLast()
@@ -679,12 +679,9 @@ class VideoViewController: UIViewController
                         newlyAdded.append(newLabel)
                     })
                 }
-                else {
-                    label.frame.origin.x += offset
-                }
             }
             
-            for label in newlyAdded {
+            for label in speedStripStack {
                 label.frame.origin.x += offset
             }
         }
@@ -865,6 +862,10 @@ extension VideoViewController: CLLocationManagerDelegate
             if currentSpeed < 0 {
                 currentSpeed = 0
             }
+
+//            let speed = Double.random(in: 1...30)
+//
+//            currentSpeed = speed
             
             var adjustment: CGFloat = 0
             //sync speedStrip with updated speed
@@ -903,10 +904,6 @@ extension VideoViewController: CLLocationManagerDelegate
             self.latitudeDisplay.text = coords.latitude
             self.longitudeDisplay.text = coords.longitude
             
-
-    //            speed = Int.random(in: 1...30)
-        
-    //            currentSpeed = speed
     //
     //            if lastSpeed != currentSpeed {
 
