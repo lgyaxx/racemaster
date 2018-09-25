@@ -506,15 +506,19 @@ class VideoViewController: UIViewController
             statsView.addSubview(label)
         }
         
-//        let gravityContainerFrame = CGRect(x: 50, y: UIScreen.main.bounds.height - 16 - gravityContainerHeight, width: gravityContainerWidth, height: gravityContainerHeight)
-//        gravityDisplayContainerView = UIView(frame: gravityContainerFrame)
-//        let crossHair = UIImage(named: "crosshair")
-//        crossHair.
-//        gravityPin = UIImageView(image: )
-//        gravityDisplayContainerView.addSubview(gravityPin)
-//        gravityPin.center.x = gravityContainerWidth / 2
-//        gravityPin.center.y = gravityContainerHeight / 2
-//        
+        let gravityContainerFrame = CGRect(x: 50, y: Double(UIScreen.main.bounds.height) - 16.0 - gravityContainerHeight, width: gravityContainerWidth, height: gravityContainerHeight)
+        gravityDisplayContainerView = UIView(frame: gravityContainerFrame)
+        gravityDisplayContainerView.backgroundColor = labelColor
+        let crossHair = UIImage(named: "crosshair")
+        gravityPin = UIImageView(image: crossHair)
+        
+        
+        gravityDisplayContainerView.addSubview(gravityPin)
+        gravityPin.center.x = CGFloat(gravityContainerWidth / 2)
+        gravityPin.center.y = CGFloat(gravityContainerHeight / 2)
+        
+        statsView.addSubview(gravityDisplayContainerView)
+        
         // create a timerDisplay
         videoTimerDisplay = createTimer()
         
@@ -586,13 +590,13 @@ class VideoViewController: UIViewController
     private func gravityIndicationUpdate(gravityAcceleration gravity: CMAcceleration)
     {
         //x, z
-//        UIView.animate(withDuration: deviceMotionRefreshInterval) {
-////            print(gravity)
-//            
-//            let multiplyer = 20.0
-//            self.gravityPin.center.x = -CGFloat(gravity.x * multiplyer)
-//            self.gravityPin.center.y = CGFloat(gravity.z * multiplyer)
-//        }
+        UIView.animate(withDuration: deviceMotionRefreshInterval) {
+//            print(gravity)
+
+            let multiplyer = 100.0
+            self.gravityPin.center.x = CGFloat(self.gravityContainerWidth / 2 - gravity.y * multiplyer)
+            self.gravityPin.center.y = CGFloat(self.gravityContainerHeight / 2 - gravity.z * multiplyer)
+        }
     }
     
     private func brakeAndThrottleUpdate(_ deltaSpeed: Double)
