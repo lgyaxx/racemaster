@@ -7,15 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		420E5B3F215927D200D50004 /* VideoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420E5B3E215927D200D50004 /* VideoHelper.swift */; };
-		420E5B41215927F500D50004 /* MyVideosViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420E5B40215927F500D50004 /* MyVideosViewController.swift */; };
 		420E5B432159284500D50004 /* Circle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420E5B422159284500D50004 /* Circle.swift */; };
+		420E5B45215A379000D50004 /* MyVideosViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420E5B44215A379000D50004 /* MyVideosViewController.swift */; };
+		420E5B46215A379000D50004 /* MyVideosViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420E5B44215A379000D50004 /* MyVideosViewController.swift */; };
+		420E5B47215A379000D50004 /* MyVideosViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420E5B44215A379000D50004 /* MyVideosViewController.swift */; };
+		420E5B49215A37A900D50004 /* VideoHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 420E5B48215A37A900D50004 /* VideoHelper.swift */; };
 		4212C2CE2132E20E00C0D2D4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4212C2CD2132E20E00C0D2D4 /* AppDelegate.swift */; };
 		4212C2D32132E20E00C0D2D4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4212C2D12132E20E00C0D2D4 /* Main.storyboard */; };
 		4212C2D52132E20F00C0D2D4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4212C2D42132E20F00C0D2D4 /* Assets.xcassets */; };
 		4212C2D82132E20F00C0D2D4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4212C2D62132E20F00C0D2D4 /* LaunchScreen.storyboard */; };
-		4212C2E32132E20F00C0D2D4 /* RaceMasterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4212C2E22132E20F00C0D2D4 /* RaceMasterTests.swift */; };
-		4212C2EE2132E20F00C0D2D4 /* RaceMasterUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4212C2ED2132E20F00C0D2D4 /* RaceMasterUITests.swift */; };
 		4212C2FC2132F4B600C0D2D4 /* IndexViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4212C2FB2132F4B600C0D2D4 /* IndexViewController.swift */; };
 		427DE4102133ADDA00AB5C7C /* VideoPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427DE40F2133ADDA00AB5C7C /* VideoPreviewView.swift */; };
 		427DE4122133C12800AB5C7C /* IDETemplateMacros.plist in Resources */ = {isa = PBXBuildFile; fileRef = 427DE4112133C12800AB5C7C /* IDETemplateMacros.plist */; };
@@ -40,9 +40,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		420E5B3E215927D200D50004 /* VideoHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = VideoHelper.swift; path = ../../../.Trash/VideoHelper.swift; sourceTree = "<group>"; };
-		420E5B40215927F500D50004 /* MyVideosViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MyVideosViewController.swift; path = ../../../.Trash/MyVideosViewController.swift; sourceTree = "<group>"; };
 		420E5B422159284500D50004 /* Circle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Circle.swift; sourceTree = "<group>"; };
+		420E5B44215A379000D50004 /* MyVideosViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyVideosViewController.swift; sourceTree = "<group>"; };
+		420E5B48215A37A900D50004 /* VideoHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VideoHelper.swift; sourceTree = "<group>"; };
 		4212C2CA2132E20E00C0D2D4 /* RaceMaster.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RaceMaster.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4212C2CD2132E20E00C0D2D4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4212C2D22132E20E00C0D2D4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -50,10 +50,8 @@
 		4212C2D72132E20F00C0D2D4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		4212C2D92132E20F00C0D2D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4212C2DE2132E20F00C0D2D4 /* RaceMasterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RaceMasterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		4212C2E22132E20F00C0D2D4 /* RaceMasterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceMasterTests.swift; sourceTree = "<group>"; };
 		4212C2E42132E20F00C0D2D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4212C2E92132E20F00C0D2D4 /* RaceMasterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RaceMasterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		4212C2ED2132E20F00C0D2D4 /* RaceMasterUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceMasterUITests.swift; sourceTree = "<group>"; };
 		4212C2EF2132E20F00C0D2D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4212C2FB2132F4B600C0D2D4 /* IndexViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndexViewController.swift; sourceTree = "<group>"; };
 		427DE40F2133ADDA00AB5C7C /* VideoPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPreviewView.swift; sourceTree = "<group>"; };
@@ -114,9 +112,9 @@
 				4212C2CD2132E20E00C0D2D4 /* AppDelegate.swift */,
 				4212C2D12132E20E00C0D2D4 /* Main.storyboard */,
 				427DE41F2133D0D000AB5C7C /* VideoViewController.swift */,
-				420E5B3E215927D200D50004 /* VideoHelper.swift */,
+				420E5B44215A379000D50004 /* MyVideosViewController.swift */,
+				420E5B48215A37A900D50004 /* VideoHelper.swift */,
 				420E5B422159284500D50004 /* Circle.swift */,
-				420E5B40215927F500D50004 /* MyVideosViewController.swift */,
 				427DE40F2133ADDA00AB5C7C /* VideoPreviewView.swift */,
 				4212C2D42132E20F00C0D2D4 /* Assets.xcassets */,
 				4212C2D62132E20F00C0D2D4 /* LaunchScreen.storyboard */,
@@ -128,7 +126,6 @@
 		4212C2E12132E20F00C0D2D4 /* RaceMasterTests */ = {
 			isa = PBXGroup;
 			children = (
-				4212C2E22132E20F00C0D2D4 /* RaceMasterTests.swift */,
 				4212C2E42132E20F00C0D2D4 /* Info.plist */,
 			);
 			path = RaceMasterTests;
@@ -137,7 +134,6 @@
 		4212C2EC2132E20F00C0D2D4 /* RaceMasterUITests */ = {
 			isa = PBXGroup;
 			children = (
-				4212C2ED2132E20F00C0D2D4 /* RaceMasterUITests.swift */,
 				4212C2EF2132E20F00C0D2D4 /* Info.plist */,
 			);
 			path = RaceMasterUITests;
@@ -280,10 +276,10 @@
 			files = (
 				420E5B432159284500D50004 /* Circle.swift in Sources */,
 				427DE4102133ADDA00AB5C7C /* VideoPreviewView.swift in Sources */,
+				420E5B49215A37A900D50004 /* VideoHelper.swift in Sources */,
 				4212C2FC2132F4B600C0D2D4 /* IndexViewController.swift in Sources */,
 				427DE4202133D0D000AB5C7C /* VideoViewController.swift in Sources */,
-				420E5B3F215927D200D50004 /* VideoHelper.swift in Sources */,
-				420E5B41215927F500D50004 /* MyVideosViewController.swift in Sources */,
+				420E5B45215A379000D50004 /* MyVideosViewController.swift in Sources */,
 				4212C2CE2132E20E00C0D2D4 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -292,7 +288,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4212C2E32132E20F00C0D2D4 /* RaceMasterTests.swift in Sources */,
+				420E5B46215A379000D50004 /* MyVideosViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -300,7 +296,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4212C2EE2132E20F00C0D2D4 /* RaceMasterUITests.swift in Sources */,
+				420E5B47215A379000D50004 /* MyVideosViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
