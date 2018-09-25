@@ -157,14 +157,6 @@
                                             <constraint firstAttribute="width" constant="24" id="La1-3f-k6M"/>
                                         </constraints>
                                     </imageView>
-                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="3Oy-aw-1rl" userLabel="Gravity force container" customClass="Circle" customModule="RaceMaster" customModuleProvider="target">
-                                        <rect key="frame" x="60" y="259" width="100" height="100"/>
-                                        <color key="backgroundColor" red="1" green="0.57637232540000005" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                        <constraints>
-                                            <constraint firstAttribute="width" constant="100" id="5Bp-9Z-oNs"/>
-                                            <constraint firstAttribute="height" constant="100" id="P4t-u4-BBD"/>
-                                        </constraints>
-                                    </view>
                                 </subviews>
                                 <constraints>
                                     <constraint firstItem="Z9i-cb-ZRg" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="57e-H8-aV6"/>
@@ -172,11 +164,9 @@
                                     <constraint firstItem="Z9i-cb-ZRg" firstAttribute="top" secondItem="Kdv-2T-5bi" secondAttribute="bottom" constant="-2.6666666666666572" id="ICS-MA-XZb"/>
                                     <constraint firstItem="kUy-OG-Lex" firstAttribute="leading" secondItem="Kdv-2T-5bi" secondAttribute="trailing" constant="50" id="Ozp-KA-Cnt"/>
                                     <constraint firstAttribute="bottom" secondItem="kUy-OG-Lex" secondAttribute="bottom" constant="16" id="X0u-Rc-8sg"/>
-                                    <constraint firstAttribute="bottom" secondItem="3Oy-aw-1rl" secondAttribute="bottom" constant="16" id="gLL-bJ-W0v"/>
                                     <constraint firstItem="Kdv-2T-5bi" firstAttribute="leading" secondItem="YWJ-Ap-8TG" secondAttribute="trailing" constant="70" id="pnc-lu-lFQ"/>
                                     <constraint firstItem="Kdv-2T-5bi" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="rJB-Md-Gmo"/>
                                     <constraint firstItem="Kdv-2T-5bi" firstAttribute="centerY" secondItem="xc2-kW-lE5" secondAttribute="centerY" id="x7U-7e-aMq"/>
-                                    <constraint firstItem="3Oy-aw-1rl" firstAttribute="leading" secondItem="xc2-kW-lE5" secondAttribute="leading" constant="60" id="yfe-dd-gXR"/>
                                 </constraints>
                             </view>
                         </subviews>
@@ -193,7 +183,6 @@
                     </view>
                     <connections>
                         <outlet property="brakeIndicator" destination="YWJ-Ap-8TG" id="Y0x-Ug-bGE"/>
-                        <outlet property="gravityDisplayContainerView" destination="xc2-kW-lE5" id="UHO-9R-iSC"/>
                         <outlet property="speedDisplay" destination="Kdv-2T-5bi" id="ORJ-o7-vWV"/>
                         <outlet property="speedReading" destination="QdD-kj-Pda" id="OFY-tL-6Ud"/>
                         <outlet property="speedTriangleIndicator" destination="Z9i-cb-ZRg" id="eGc-B7-yml"/>

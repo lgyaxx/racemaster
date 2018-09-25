@@ -125,7 +125,10 @@ class VideoViewController: UIViewController
     private var latitudeDisplayRect: CGRect!
     
     //MARK: - Gravity related variables
-    @IBOutlet var gravityDisplayContainerView: UIView!
+    private var gravityDisplayContainerView: UIView!
+    private var gravityPin: UIImageView!
+    private let gravityContainerWidth = 100.0
+    private let gravityContainerHeight = 100.0
     
     // MARK: - Speed related controls
     @IBOutlet var speedTriangleIndicator: UIImageView!
@@ -375,7 +378,6 @@ class VideoViewController: UIViewController
                 self.brakeIndicator.image = UIImage(named: "brake-inactive")
             }
         })
-
         
         // start data flow to show preview
         self.captureSession.startRunning()
@@ -504,6 +506,15 @@ class VideoViewController: UIViewController
             statsView.addSubview(label)
         }
         
+//        let gravityContainerFrame = CGRect(x: 50, y: UIScreen.main.bounds.height - 16 - gravityContainerHeight, width: gravityContainerWidth, height: gravityContainerHeight)
+//        gravityDisplayContainerView = UIView(frame: gravityContainerFrame)
+//        let crossHair = UIImage(named: "crosshair")
+//        crossHair.
+//        gravityPin = UIImageView(image: )
+//        gravityDisplayContainerView.addSubview(gravityPin)
+//        gravityPin.center.x = gravityContainerWidth / 2
+//        gravityPin.center.y = gravityContainerHeight / 2
+//        
         // create a timerDisplay
         videoTimerDisplay = createTimer()
         
@@ -564,15 +575,24 @@ class VideoViewController: UIViewController
                     
                     self.speedStripUpdate(deltaSpeed)
                     
+                    self.gravityIndicationUpdate(gravityAcceleration: validData.gravity)
+                    
                     self.lastAcceleration = acceleration.z
                 }
             })
         }
     }
     
-    private func gravityForceUpdate()
+    private func gravityIndicationUpdate(gravityAcceleration gravity: CMAcceleration)
     {
-        
+        //x, z
+//        UIView.animate(withDuration: deviceMotionRefreshInterval) {
+////            print(gravity)
+//            
+//            let multiplyer = 20.0
+//            self.gravityPin.center.x = -CGFloat(gravity.x * multiplyer)
+//            self.gravityPin.center.y = CGFloat(gravity.z * multiplyer)
+//        }
     }
     
     private func brakeAndThrottleUpdate(_ deltaSpeed: Double)
@@ -582,16 +602,16 @@ class VideoViewController: UIViewController
             self.brakeAmber = false
             self.throttleActive = false
         }
-        else if deltaSpeed >= -0.03 { // throttle is pressed
+        else if deltaSpeed >= -0.05 { // throttle is pressed
             self.throttleActive = true
             self.brakeActive = false
         }
-        else if deltaSpeed < -0.15 { // decelerating
+        else if deltaSpeed < -0.20 { // decelerating
             self.brakeActive = true
             self.brakeAmber = false
             self.throttleActive = false
         }
-        else if deltaSpeed < -0.08 {
+        else if deltaSpeed < -0.15 {
             self.brakeActive = true
             self.brakeAmber = true
             self.throttleActive = false
@@ -677,7 +697,7 @@ class VideoViewController: UIViewController
                         newLabel.textColor = UIColor.white
                         let firstLabel = self.speedStripStack[0]
                         if let spdText = firstLabel.text, let firstLabelSpeed: Int = Int(spdText), (firstLabelSpeed - 5) >= 0 {
-                            newLabel.text = String(firstLabelSpeed)
+                            newLabel.text = String(firstLabelSpeed - 5)
                         }
                         self.speedStripStack.removeLast()
                         self.speedStripStack.insert(newLabel, at: 0)
@@ -869,7 +889,7 @@ extension VideoViewController: CLLocationManagerDelegate
                 currentSpeed = 0
             }
 //
-//            let speed = Double.random(in: 1...180)
+//            let speed = Double.random(in: 1...50)
 //
 //            currentSpeed = speed
             
