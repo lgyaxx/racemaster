@@ -10,7 +10,7 @@ import CoreMotion
 
 
 extension UIView {
-    func slideUp(_ duration:CFTimeInterval) {
+    public func slideUp(_ duration:CFTimeInterval) {
         let animation:CATransition = CATransition()
         animation.timingFunction = CAMediaTimingFunction(name:
             CAMediaTimingFunctionName.easeInEaseOut)
@@ -20,7 +20,7 @@ extension UIView {
         layer.add(animation, forKey: CATransitionType.push.rawValue)
     }
     
-    func slideDown(_ duration:CFTimeInterval) {
+    public func slideDown(_ duration:CFTimeInterval) {
         let animation:CATransition = CATransition()
         animation.timingFunction = CAMediaTimingFunction(name:
             CAMediaTimingFunctionName.easeInEaseOut)
@@ -38,10 +38,8 @@ extension UIView {
             bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
     }
-}
-
-extension UIView {
-    func asImage() -> UIImage {
+    
+    public func asImage() -> UIImage {
         let renderer = UIGraphicsImageRenderer(bounds: bounds)
         return renderer.image { rendererContext in
             self.layer.render(in: rendererContext.cgContext)
@@ -126,7 +124,10 @@ class VideoViewController: UIViewController
     private var longitudeDisplay: UILabel!
     private var latitudeDisplayRect: CGRect!
     
-    // MARK: - speed related controls
+    //MARK: - Gravity related variables
+    @IBOutlet var gravityDisplayContainerView: UIView!
+    
+    // MARK: - Speed related controls
     @IBOutlet var speedTriangleIndicator: UIImageView!
     private lazy var speedStripStack = [UILabel]()
     private lazy var speedStripStackY = {
@@ -167,7 +168,7 @@ class VideoViewController: UIViewController
     private var lastTimestamp: Date = Date()
     private var lastAcceleration: Double = 0.0
     private var speedLock = false
-    private let speedDisplayRefreshInterval: Double = 1 / 20
+    private let speedDisplayRefreshInterval: Double = 1 / 10
     private let deviceMotionRefreshInterval: Double = 1 / 30
     private lazy var accelerationTimelines = [(date: Date, acceleration: Double)]()
     
@@ -559,7 +560,7 @@ class VideoViewController: UIViewController
                         deltaSpeed = -self.currentSpeed
                     }
                     //update current speed
-//                    self.currentSpeed = self.currentSpeed + deltaSpeed
+                    self.currentSpeed = self.currentSpeed + deltaSpeed
                     
                     self.speedStripUpdate(deltaSpeed)
                     
@@ -567,6 +568,11 @@ class VideoViewController: UIViewController
                 }
             })
         }
+    }
+    
+    private func gravityForceUpdate()
+    {
+        
     }
     
     private func brakeAndThrottleUpdate(_ deltaSpeed: Double)
@@ -862,8 +868,8 @@ extension VideoViewController: CLLocationManagerDelegate
             if currentSpeed < 0 {
                 currentSpeed = 0
             }
-
-//            let speed = Double.random(in: 1...30)
+//
+//            let speed = Double.random(in: 1...180)
 //
 //            currentSpeed = speed
             
@@ -904,14 +910,12 @@ extension VideoViewController: CLLocationManagerDelegate
             self.latitudeDisplay.text = coords.latitude
             self.longitudeDisplay.text = coords.longitude
             
-    //
-    //            if lastSpeed != currentSpeed {
 
-    //
-    //                print("time interval: \(interval)")
-    //                interval = interval / 2000000000.0 / Double(abs(currentSpeed - lastSpeed))
-    //                updateSpeedReading(interval: interval)
-    //            }
+//            if lastSpeed != currentSpeed {
+//                print("time interval: \(interval)")
+//                interval = interval / 2000000000.0 / Double(abs(currentSpeed - lastSpeed))
+//                updateSpeedReading(interval: interval)
+//            }
             
         }
     }
