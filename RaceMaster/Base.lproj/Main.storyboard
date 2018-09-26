@@ -27,7 +27,7 @@
                                             <barButtonItem title="Avatar" id="aXM-yX-xak"/>
                                             <barButtonItem style="plain" id="Di7-TV-RDu">
                                                 <searchBar key="customView" contentMode="redraw" text="" id="d6X-Le-m07">
-                                                    <rect key="frame" x="79.333333333333314" y="0.0" width="224" height="56"/>
+                                                    <rect key="frame" x="79" y="0.0" width="224" height="56"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                                                     <textInputTraits key="textInputTraits"/>
                                                     <connections>
@@ -108,10 +108,10 @@
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xc2-kW-lE5">
-                                <rect key="frame" x="0.0" y="0.0" width="768" height="375"/>
+                                <rect key="frame" x="0.0" y="0.0" width="812" height="375"/>
                                 <subviews>
                                     <stackView contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Kdv-2T-5bi" userLabel="Speed Labels Container">
-                                        <rect key="frame" x="334" y="172.66666666666666" width="100" height="30"/>
+                                        <rect key="frame" x="356" y="172.66666666666666" width="100" height="30"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" text="0" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QdD-kj-Pda" userLabel="Speed">
                                                 <rect key="frame" x="0.0" y="0.0" width="40" height="30"/>
@@ -137,21 +137,21 @@
                                         <viewLayoutGuide key="safeArea" id="tiy-Gc-ZgY"/>
                                     </stackView>
                                     <imageView userInteractionEnabled="NO" alpha="0.5" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="kUy-OG-Lex" userLabel="throttle">
-                                        <rect key="frame" x="484" y="284" width="25" height="75"/>
+                                        <rect key="frame" x="506" y="284" width="25" height="75"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="75" id="0Zx-B5-byG"/>
                                             <constraint firstAttribute="width" constant="25" id="yOz-JN-dtx"/>
                                         </constraints>
                                     </imageView>
                                     <imageView autoresizesSubviews="NO" userInteractionEnabled="NO" alpha="0.5" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="YWJ-Ap-8TG" userLabel="brake">
-                                        <rect key="frame" x="239" y="284" width="25" height="75"/>
+                                        <rect key="frame" x="281" y="284" width="25" height="75"/>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="25" id="6yW-t6-cpc"/>
                                             <constraint firstAttribute="height" constant="75" id="a9v-5Q-uJV"/>
                                         </constraints>
                                     </imageView>
                                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="triangle-indicator" translatesAutoresizingMaskIntoConstraints="NO" id="Z9i-cb-ZRg">
-                                        <rect key="frame" x="372" y="200" width="24" height="20"/>
+                                        <rect key="frame" x="394" y="200" width="24" height="20"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="20" id="9yu-83-30h"/>
                                             <constraint firstAttribute="width" constant="24" id="La1-3f-k6M"/>
@@ -164,7 +164,7 @@
                                     <constraint firstItem="Z9i-cb-ZRg" firstAttribute="top" secondItem="Kdv-2T-5bi" secondAttribute="bottom" constant="-2.6666666666666572" id="ICS-MA-XZb"/>
                                     <constraint firstItem="kUy-OG-Lex" firstAttribute="leading" secondItem="Kdv-2T-5bi" secondAttribute="trailing" constant="50" id="Ozp-KA-Cnt"/>
                                     <constraint firstAttribute="bottom" secondItem="kUy-OG-Lex" secondAttribute="bottom" constant="16" id="X0u-Rc-8sg"/>
-                                    <constraint firstItem="Kdv-2T-5bi" firstAttribute="leading" secondItem="YWJ-Ap-8TG" secondAttribute="trailing" constant="70" id="pnc-lu-lFQ"/>
+                                    <constraint firstItem="Kdv-2T-5bi" firstAttribute="leading" secondItem="YWJ-Ap-8TG" secondAttribute="trailing" constant="50" id="pnc-lu-lFQ"/>
                                     <constraint firstItem="Kdv-2T-5bi" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="rJB-Md-Gmo"/>
                                     <constraint firstItem="Kdv-2T-5bi" firstAttribute="centerY" secondItem="xc2-kW-lE5" secondAttribute="centerY" id="x7U-7e-aMq"/>
                                 </constraints>
@@ -172,14 +172,16 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="xc2-kW-lE5" firstAttribute="trailing" secondItem="tw2-S9-AhZ" secondAttribute="trailing" id="2nn-ER-dtq"/>
-                            <constraint firstItem="xc2-kW-lE5" firstAttribute="top" secondItem="tw2-S9-AhZ" secondAttribute="top" id="T6P-ig-yzz"/>
-                            <constraint firstItem="xc2-kW-lE5" firstAttribute="trailing" secondItem="tw2-S9-AhZ" secondAttribute="trailing" id="Vq5-TJ-ZgS"/>
+                            <constraint firstItem="xc2-kW-lE5" firstAttribute="trailing" secondItem="Fgf-pp-agf" secondAttribute="trailing" id="2nn-ER-dtq"/>
+                            <constraint firstItem="xc2-kW-lE5" firstAttribute="top" secondItem="Fgf-pp-agf" secondAttribute="top" id="9y6-tg-Acq"/>
+                            <constraint firstItem="xc2-kW-lE5" firstAttribute="top" secondItem="Fgf-pp-agf" secondAttribute="top" id="T6P-ig-yzz"/>
+                            <constraint firstItem="xc2-kW-lE5" firstAttribute="trailing" secondItem="Fgf-pp-agf" secondAttribute="trailing" id="Vq5-TJ-ZgS"/>
                             <constraint firstAttribute="bottom" secondItem="xc2-kW-lE5" secondAttribute="bottom" id="Xwb-nD-XUU"/>
-                            <constraint firstItem="tw2-S9-AhZ" firstAttribute="trailing" secondItem="xc2-kW-lE5" secondAttribute="trailing" id="kKJ-xW-Zfh"/>
+                            <constraint firstAttribute="bottom" secondItem="xc2-kW-lE5" secondAttribute="bottom" id="cqZ-MI-HFZ"/>
                             <constraint firstItem="xc2-kW-lE5" firstAttribute="leading" secondItem="Fgf-pp-agf" secondAttribute="leading" id="ox4-PT-GwL"/>
+                            <constraint firstItem="xc2-kW-lE5" firstAttribute="leading" secondItem="Fgf-pp-agf" secondAttribute="leading" id="r2r-ah-LYW"/>
+                            <constraint firstItem="xc2-kW-lE5" firstAttribute="trailing" secondItem="Fgf-pp-agf" secondAttribute="trailing" id="xtY-aY-5yp"/>
                         </constraints>
-                        <viewLayoutGuide key="safeArea" id="tw2-S9-AhZ"/>
                     </view>
                     <connections>
                         <outlet property="brakeIndicator" destination="YWJ-Ap-8TG" id="Y0x-Ug-bGE"/>
