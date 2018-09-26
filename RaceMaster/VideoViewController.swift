@@ -143,11 +143,18 @@ class VideoViewController: UIViewController
     private let speedStripMarkUnit = 5.0
     private let speedLabelHeight: CGFloat = 20
     private let speedStripMarkFont = UIFont.systemFont(ofSize: 12)
+    private lazy var safeAreaWidth = {
+        return UIScreen.main.bounds.width - view.safeAreaInsets.right - view.safeAreaInsets.left
+    }()
+    private lazy var safeAreaHeight = {
+        return UIScreen.main.bounds.height - view.safeAreaInsets.top - view.safeAreaInsets.bottom
+    }()
+    
     private lazy var speedStripLeftBound = {
-        return UIScreen.main.bounds.width / 2.0 - speedStripWidth / 2
+        return  safeAreaWidth / 2.0 - speedStripWidth / 2
     }()
     private lazy var speedStripRightBound = {
-        return UIScreen.main.bounds.width / 2.0 + speedStripWidth / 2
+        return safeAreaWidth / 2.0 + speedStripWidth / 2
     }()
     
     private lazy var speedDisplayBackground: UIView = {
@@ -492,6 +499,7 @@ class VideoViewController: UIViewController
             let speedLabelOffsetX = speedStripLeftBound + CGFloat(i) * speedLabelWidth
             let frame = CGRect(x: speedLabelOffsetX, y: speedStripStackY, width: speedLabelWidth, height: speedLabelHeight)
             let label = UILabel(frame: frame)
+//            label.translatesAutoresizingMaskIntoConstraints = false
             label.textAlignment = .center
             label.backgroundColor = UIColor.clear
             label.textColor = UIColor.white
@@ -504,6 +512,8 @@ class VideoViewController: UIViewController
             }
             speedStripStack.append(label)
             statsView.addSubview(label)
+//            label.topAnchor.constraint(greaterThanOrEqualToSystemSpacingBelow: speedTriangleIndicator.bottomAnchor, multiplier: 0.1).isActive = true
+
         }
         
         let gravityContainerFrame = CGRect(x: 50, y: Double(UIScreen.main.bounds.height) - 16.0 - gravityContainerHeight, width: gravityContainerWidth, height: gravityContainerHeight)
