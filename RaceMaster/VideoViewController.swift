@@ -693,12 +693,12 @@ class VideoViewController: UIViewController
 //            print(gravity)
 
             let multiplyer = 50.0
-            var yOffset = -multiplyer * gravity.z
+            var yOffset = multiplyer * gravity.z
             if abs(yOffset) > self.gravityContainerHeight / 2 {
                 yOffset = yOffset / abs(yOffset) * floor(self.gravityContainerHeight / 2 - 5)
             }
             
-            var xOffset = -multiplyer * gravity.y
+            var xOffset = multiplyer * gravity.y
             if abs(xOffset) > self.gravityContainerWidth / 2 {
                 xOffset = xOffset / abs(xOffset) * floor(self.gravityContainerWidth / 2 - 5)
             }
