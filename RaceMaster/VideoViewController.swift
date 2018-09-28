@@ -126,10 +126,12 @@ class VideoViewController: UIViewController
     @IBOutlet var latitudeContainer: UILabel!
     
     //MARK: - Gravity related variables
-    private var gravityDisplayContainerView: UIView!
-    private var gravityPin: UIImageView!
+    @IBOutlet var gravityContainer: Circle!
+    @IBOutlet var gravityCrossHair: UIImageView!
     private let gravityContainerWidth = 100.0
     private let gravityContainerHeight = 100.0
+    private var gravityCrossHairYConstraint: NSLayoutConstraint? = nil
+    private var gravityCrossHairXConstraint: NSLayoutConstraint? = nil
     
 
     // MARK: - Speed related controls
@@ -145,6 +147,7 @@ class VideoViewController: UIViewController
     private lazy var screenHeight = {
         return UIScreen.main.bounds.height
     }()
+    
     
     @IBOutlet var throttleIndicator: UIImageView!
     @IBOutlet var brakeIndicator: UIImageView!
@@ -487,16 +490,10 @@ class VideoViewController: UIViewController
     private func updateSpeedLabels()
     {
         let speed = Int(round(self.currentSpeed))
-        print(speed)
         
         let hundredsDigit = speed / 100
         let tensDigit = speed % 100 / 10
         let onesDigit = speed % 10
-        
-        print(hundredsDigit)
-        print(tensDigit)
-        print(onesDigit)
-        print("\n")
         
         if hundredsDigit > self.lastHundredsDigit {
             //increasing for hundreds
@@ -669,7 +666,7 @@ class VideoViewController: UIViewController
                     self.accelerationTimelines.append((Date(), -acceleration.z))
                     
                     //calculate instant delta speed for later usage
-                    var deltaSpeed = -acceleration.z * self.deviceMotionRefreshInterval * 9.8 * 3.6
+                    var deltaSpeed = -acceleration.z * self.deviceMotionRefreshInterval * 9.81 * 3.6
                     
                     //update throttle and brake indication according to deltaSpeed
 //                    self.brakeAndThrottleUpdate(deltaSpeed)
@@ -681,7 +678,7 @@ class VideoViewController: UIViewController
                     //update current speed
                     self.currentSpeed = self.currentSpeed + deltaSpeed
                     
-//                    self.gravityIndicationUpdate(gravityAcceleration: validData.gravity)
+                    self.gravityIndicationUpdate(gravityAcceleration: validData.userAcceleration)
                     
                     self.lastAcceleration = acceleration.z
                 }
@@ -695,9 +692,32 @@ class VideoViewController: UIViewController
         UIView.animate(withDuration: deviceMotionRefreshInterval) {
 //            print(gravity)
 
-            let multiplyer = 2500.0
-            self.gravityPin.center.x = CGFloat(self.gravityContainerWidth / 2 - gravity.y * multiplyer)
-            self.gravityPin.center.y = CGFloat(self.gravityContainerHeight / 2 - gravity.z * multiplyer)
+            let multiplyer = 50.0
+            var yOffset = -multiplyer * gravity.z
+            if abs(yOffset) > self.gravityContainerHeight / 2 {
+                yOffset = yOffset / abs(yOffset) * floor(self.gravityContainerHeight / 2 - 5)
+            }
+            
+            var xOffset = -multiplyer * gravity.y
+            if abs(xOffset) > self.gravityContainerWidth / 2 {
+                xOffset = xOffset / abs(xOffset) * floor(self.gravityContainerWidth / 2 - 5)
+            }
+            
+//            print("xOffset \(gravity.y)")
+//            print("yOffset \(gravity.z)")
+//            print("x \(gravity.x)")
+            
+            if let yConstraint = self.gravityCrossHairYConstraint {
+                yConstraint.isActive = false
+            }
+            self.gravityCrossHairYConstraint = self.gravityCrossHair.centerYAnchor.constraint(equalTo: self.gravityContainer.centerYAnchor, constant: CGFloat(yOffset))
+            self.gravityCrossHairYConstraint!.isActive = true
+            
+            if let xConstraint = self.gravityCrossHairXConstraint {
+                xConstraint.isActive = false
+            }
+            self.gravityCrossHairXConstraint = self.gravityCrossHair.centerXAnchor.constraint(equalTo: self.gravityContainer.centerXAnchor, constant: CGFloat(xOffset))
+            self.gravityCrossHairXConstraint!.isActive = true
         }
     }
     
@@ -839,7 +859,7 @@ extension VideoViewController: CLLocationManagerDelegate
                     continue
                 }
                 else {
-                    deltaSpeed += acData.acceleration * deviceMotionRefreshInterval * 9.8 * 3.6
+                    deltaSpeed += acData.acceleration * deviceMotionRefreshInterval * 9.81 * 3.6
                 }
             }
             currentSpeed = lastSpeed + deltaSpeed
@@ -909,40 +929,38 @@ extension VideoViewController: CLLocationManagerDelegate
 extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
 
-        //Important: Correct your video orientation from your device orientation
-        connection.videoOrientation = .landscapeLeft
-        
-        guard isRecordingStarted, canWrite() else { return }
-        
-        let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
-        
-        CVPixelBufferLockBaseAddress(pixelBuffer, [])
-        let context = CGContext.init(data: CVPixelBufferGetBaseAddress(pixelBuffer), width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue)!
-
-//        context.saveGState()
-//        context.translateBy(x: CGFloat(context.width), y: 0)
-//        context.translateBy(x: CGFloat(context.width), y: 0)
-//        speedString.draw(in: renderBounds, withAttributes: attrs)
-//        context?.clear(UIScreen.main.bounds)
-//        context?.draw(latitudeDisplay.asImage().cgImage!, in: renderBounds)
-//        context.scaleBy(x: 1.0, y: 1.0)
-//        context.rotate(by: CGFloat(Double.pi * 90 / 180))
-//        context.translateBy(x: 0, y: -CGFloat(context.width))
-
-//        UIImageWriteToSavedPhotosAlbum(outputImage, nil, nil, nil)
-        context.draw(statsViewSnapshot.cgImage!, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
-//        context.draw(outputImage, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
-//        context.restoreGState()
-        
-        CVPixelBufferUnlockBaseAddress(pixelBuffer, [])
-        
         if output == videoDataOutput {
-            if isRecordingStarted, videoWriterInput.isReadyForMoreMediaData {
+            
+            //Important: Correct your video orientation from your device orientation
+            connection.videoOrientation = .landscapeLeft
+            
+            guard isRecordingStarted, canWrite() else { return }
+            
+            let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
+            
+            CVPixelBufferLockBaseAddress(pixelBuffer, [])
+            let context = CGContext.init(data: CVPixelBufferGetBaseAddress(pixelBuffer), width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue)!
+
+    //        context.saveGState()
+    //        context.translateBy(x: CGFloat(context.width), y: 0)
+    //        context.translateBy(x: CGFloat(context.width), y: 0)
+    //        speedString.draw(in: renderBounds, withAttributes: attrs)
+    //        context?.clear(UIScreen.main.bounds)
+    //        context?.draw(latitudeDisplay.asImage().cgImage!, in: renderBounds)
+    //        context.scaleBy(x: 1.0, y: 1.0)
+    //        context.rotate(by: CGFloat(Double.pi * 90 / 180))
+    //        context.translateBy(x: 0, y: -CGFloat(context.width))
+
+    //        UIImageWriteToSavedPhotosAlbum(outputImage, nil, nil, nil)
+            context.draw(statsViewSnapshot.cgImage!, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
+    //        context.restoreGState()
+            
+            if videoWriterInputPixelBufferAdaptor.assetWriterInput.isReadyForMoreMediaData {
                 let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-                //Write video buffer
-//                videoWriterInput.append(sampleBuffer)
                 videoWriterInputPixelBufferAdaptor.append(pixelBuffer, withPresentationTime: timestamp)
             }
+            
+            CVPixelBufferUnlockBaseAddress(pixelBuffer, [])
         }
     }
     

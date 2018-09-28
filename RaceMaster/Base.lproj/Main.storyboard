@@ -190,11 +190,22 @@
                                         <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <view alpha="0.5" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ACg-wz-jIn" customClass="Circle" customModule="RaceMaster" customModuleProvider="target">
+                                    <view alpha="0.5" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ACg-wz-jIn" customClass="Circle" customModule="RaceMaster" customModuleProvider="target">
                                         <rect key="frame" x="75" y="244" width="100" height="100"/>
+                                        <subviews>
+                                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="crosshair" translatesAutoresizingMaskIntoConstraints="NO" id="Us1-he-kT3" userLabel="crosshair">
+                                                <rect key="frame" x="45" y="45" width="10" height="10"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="width" constant="10" id="Bw4-Jb-RaR"/>
+                                                    <constraint firstAttribute="height" constant="10" id="Wjh-nZ-vEh"/>
+                                                </constraints>
+                                            </imageView>
+                                        </subviews>
                                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <constraints>
+                                            <constraint firstItem="Us1-he-kT3" firstAttribute="centerX" secondItem="ACg-wz-jIn" secondAttribute="centerX" id="5eD-rF-HUE"/>
                                             <constraint firstAttribute="height" constant="100" id="BaV-s2-46m"/>
+                                            <constraint firstItem="Us1-he-kT3" firstAttribute="centerY" secondItem="ACg-wz-jIn" secondAttribute="centerY" id="N45-Qd-1ch"/>
                                             <constraint firstAttribute="width" constant="100" id="nL3-cy-abX"/>
                                         </constraints>
                                     </view>
@@ -237,6 +248,8 @@
                     </view>
                     <connections>
                         <outlet property="brakeIndicator" destination="YWJ-Ap-8TG" id="Y0x-Ug-bGE"/>
+                        <outlet property="gravityContainer" destination="ACg-wz-jIn" id="9TA-Xy-5qh"/>
+                        <outlet property="gravityCrossHair" destination="Us1-he-kT3" id="3uh-Ar-TUI"/>
                         <outlet property="hundredsDigitLabel" destination="PDv-ue-BFg" id="dDK-oU-1tx"/>
                         <outlet property="latitudeContainer" destination="2eR-4v-OAq" id="fxk-ME-zav"/>
                         <outlet property="longitudeContainer" destination="qaU-Ny-MLV" id="URo-1g-Beg"/>
@@ -334,6 +347,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="crosshair" width="26" height="26"/>
         <image name="tachometer" width="96" height="96"/>
         <image name="throttle-inactive" width="100" height="100"/>
     </resources>
