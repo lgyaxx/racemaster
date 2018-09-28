@@ -5,7 +5,7 @@
 import UIKit
 import AVFoundation
 import CoreLocation
-import Foundation
+
 import CoreMotion
 
 
@@ -49,6 +49,8 @@ extension UIView {
 
 class VideoViewController: UIViewController
 {
+    private var statsViewSnapshot: UIImage!
+    
     // MARK: - Video related controls
     private var isRecordingStarted = false
     
@@ -144,23 +146,22 @@ class VideoViewController: UIViewController
         return UIScreen.main.bounds.height
     }()
     
-    private var speedLabelSize: CGSize!
-    private var speedLabelRect: CGRect!
     @IBOutlet var throttleIndicator: UIImageView!
     @IBOutlet var brakeIndicator: UIImageView!
     private lazy var throttleActive = false
     private lazy var brakeActive = false
     private lazy var brakeAmber = false
+    
     private lazy var cmManager = CMMotionManager()
     private var currentSpeed: Double = 0
     private var lastSpeed: Double = 0
     private var lastTimestamp: Date = Date()
     private var lastAcceleration: Double = 0.0
     private var speedLock = false
-    private let speedDisplayRefreshInterval: Double = 1 / 10
+    private let speedDisplayRefreshInterval: Double = 1 / 3
     private let deviceMotionRefreshInterval: Double = 1 / 30
+    private let videoSnapShotFrameRate: Double = 60
     private lazy var accelerationTimelines = [(date: Date, acceleration: Double)]()
-    
     
     private weak var timer: Timer!
     private let numberFormatter: NumberFormatter = {
@@ -196,7 +197,7 @@ class VideoViewController: UIViewController
         captureSession.sessionPreset = .high
         
         videoDataOutput.videoSettings = [
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
         ]
         videoDataOutput.alwaysDiscardsLateVideoFrames = true
         
@@ -246,13 +247,12 @@ class VideoViewController: UIViewController
     {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized: // The user has previously granted access to the camera.
-            self.setupCaptureSession()
             return
             
         case .notDetermined: // The user has not yet been asked for camera access.
             AVCaptureDevice.requestAccess(for: .video) { granted in
                 if granted {
-                    self.setupCaptureSession()
+                    return
                 }
                 else {
                     fatalError("User denied use of camera")
@@ -271,7 +271,7 @@ class VideoViewController: UIViewController
             
             videoWriter = try AVAssetWriter(url: videoPath, fileType: AVFileType.mp4)
             
-            let videoWidth = self.view.bounds.width + 5
+            let videoWidth = self.view.bounds.width + 6
 //            let videoHeight = ceil(videoWidth * 9.0 / 16.0) + 3
             let videoHeight = self.view.bounds.height
             //Add video input 16:9
@@ -280,9 +280,10 @@ class VideoViewController: UIViewController
                 AVVideoWidthKey: videoWidth,
                 AVVideoHeightKey: videoHeight,
                 AVVideoCompressionPropertiesKey: [
-                    AVVideoAverageBitRateKey: 2300000,
-//                    AVVideoMaxKeyFrameIntervalKey: 1/60,
-//                    AVVideoExpectedSourceFrameRateKey: NSNumber(value: 60),
+                    AVVideoAverageBitRateKey: 2048000,
+//                    AVVideoMaxKeyFrameIntervalKey: 1.0,
+                    AVVideoExpectedSourceFrameRateKey: NSNumber(value: 60),
+//                    AVVideoQualityKey: NSNumber(value: 1.0),
                 ],
                 
             ])
@@ -327,9 +328,13 @@ class VideoViewController: UIViewController
     }
     
     override func viewDidLoad() {
-        super.viewDidLoad()
         
         testAuthorizedToUseCamera()
+        
+        self.setupCaptureSession()
+        
+        super.viewDidLoad()
+        
         
         // force landscape before setting up video preview
         let orientation = UIInterfaceOrientation.landscapeLeft.rawValue
@@ -340,196 +345,17 @@ class VideoViewController: UIViewController
         videoPreviewLayer = videoPreviewView.videoPreviewLayer
         videoFrameRect = videoPreviewLayer.bounds
 
-//        pinBackground(speedDisplayBackground, to: speedDisplay)
         createStatsViews()
+        
+        Timer.scheduledTimer(withTimeInterval: 1 / videoSnapShotFrameRate, repeats: true) { (Timer) in
+            self.statsViewSnapshot = self.statsView.asImage()
+        }
         
         Timer.scheduledTimer(withTimeInterval: speedDisplayRefreshInterval, repeats: true, block: { Timer in
             
             //update speed reading
-//            self.speedReading.text = String(Int(ceil(self.currentSpeed)))
-            let speed = Int(round(self.currentSpeed))
+            self.updateSpeedLabels()
             
-            let hundredsDigit = speed / 100
-            let tensDigit = speed % 100 / 10
-            let onesDigit = speed % 10
-            
-            if hundredsDigit > self.lastHundredsDigit {
-                //increasing for hundreds
-                var diff = hundredsDigit - self.lastHundredsDigit
-                var temp = hundredsDigit
-                for _ in 0..<diff {
-                    self.hundredsDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
-                    temp += 1
-                    self.hundredsDigitLabel.text = String(temp)
-                }
-                
-                //increasing for tens
-                diff = abs(tensDigit - self.lastTensDigit)
-                temp = self.lastTensDigit
-                for _ in 0..<diff {
-                    temp -= 1
-                    if temp < 0 {
-                        temp = 9
-                    }
-                    self.tensDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
-                    self.tensDigitLabel.text = String(temp)
-                }
-                
-                //increasing for ones
-                diff = abs(onesDigit - self.lastOnesDigit)
-                temp = self.lastOnesDigit
-                for _ in 0..<diff {
-                    temp += 1
-                    if temp >= 10 {
-                        temp = 0
-                    }
-                    self.onesDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
-                    self.onesDigitLabel.text = String(temp)
-                }
-            }
-            else if hundredsDigit < self.lastHundredsDigit {
-                //decreasing for hundreds
-                var diff = self.lastHundredsDigit - hundredsDigit
-                var temp = hundredsDigit
-                for _ in 0..<diff {
-                    self.hundredsDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
-                    temp -= 1
-                    self.hundredsDigitLabel.text = String(temp)
-                    
-                }
-                
-                //decreasing for tens
-                diff = abs(tensDigit - self.lastTensDigit)
-                temp = self.lastTensDigit
-                for _ in 0..<diff {
-                    temp -= 1
-                    if temp < 0 {
-                        temp = 9
-                    }
-                    self.tensDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
-                    self.tensDigitLabel.text = String(temp)
-                }
-                
-                //decreasing for ones
-                diff = abs(onesDigit - self.lastOnesDigit)
-                temp = self.lastOnesDigit
-                for _ in 0..<diff {
-                    temp -= 1
-                    if temp < 0 {
-                        temp = 9
-                    }
-                    self.onesDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
-                    self.onesDigitLabel.text = String(temp)
-                }
-                
-            }
-            else { //hundredsDigit the same, using tensDigit
-                if self.lastTensDigit > tensDigit { //should show decreasing animation
-                    //decrease for tens
-                    var diff = abs(self.lastTensDigit - tensDigit)
-                    var temp = self.lastTensDigit
-                    for _ in 0..<diff {
-                        temp -= 1
-                        if temp < 0 {
-                            temp = 9
-                        }
-                        self.tensDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
-                        self.tensDigitLabel.text = String(temp)
-                    }
-                    
-                    //decrease for ones
-                    diff = abs(onesDigit - self.lastOnesDigit)
-                    temp = self.lastTensDigit
-                    for _ in 0..<diff {
-                        temp -= 1
-                        if temp < 0 {
-                            temp = 9
-                        }
-                        self.onesDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
-                        self.onesDigitLabel.text = String(temp)
-                    }
-                }
-                else if self.lastTensDigit < tensDigit { // should show increasing
-                    //increase for tens
-                    var diff = abs(tensDigit - self.lastTensDigit)
-                    var temp = self.lastTensDigit
-                    for _ in 0..<diff {
-                        temp += 1
-                        if temp >= 10 {
-                            temp = 0
-                        }
-                        self.tensDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
-                        self.tensDigitLabel.text = String(temp)
-                    }
-                    
-                    //increase for ones
-                    diff = abs(onesDigit - self.lastOnesDigit)
-                    temp = self.lastOnesDigit
-                    for _ in 0..<diff {
-                        temp += 1
-                        if temp >= 10 {
-                            temp = 0
-                        }
-                        self.onesDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
-                        self.onesDigitLabel.text = String(temp)
-                    }
-                }
-                else { //tens digit the same, compare ones digit
-                    if self.lastOnesDigit < onesDigit { //should show increasing
-                        let diff = abs(onesDigit - self.lastOnesDigit)
-                        var temp = self.lastOnesDigit
-                        for _ in 0..<diff {
-                            temp += 1
-                            if temp >= 10 {
-                                temp = 0
-                            }
-                            self.onesDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
-                            self.onesDigitLabel.text = String(temp)
-                        }
-                    }
-                    else if self.lastOnesDigit > onesDigit { //should show descreasing
-                        let diff = abs(onesDigit - self.lastOnesDigit)
-                        var temp = self.lastTensDigit
-                        for _ in 0..<diff {
-                            temp -= 1
-                            if temp < 0 {
-                                temp = 9
-                            }
-                            self.onesDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
-                            self.onesDigitLabel.text = String(temp)
-                        }
-                    }
-                }
-            }
-            
-            
-            
-            self.hundredsDigitLabel.text = String(hundredsDigit)
-            self.tensDigitLabel.text = String(tensDigit)
-            self.onesDigitLabel.text = String(onesDigit)
-            
-            self.lastHundredsDigit = hundredsDigit
-            self.lastTensDigit = tensDigit
-            self.lastOnesDigit = onesDigit
-            //update throttle and brake indicator
-            if self.throttleActive {
-                self.throttleIndicator.image = UIImage(named: "throttle-active")
-            }
-            else {
-                self.throttleIndicator.image = UIImage(named: "throttle-inactive")
-            }
-            
-            if self.brakeActive {
-                if self.brakeAmber {
-                    self.brakeIndicator.image = UIImage(named: "brake-amber")
-                }
-                else {
-                    self.brakeIndicator.image = UIImage(named: "brake-red")
-                }
-            }
-            else {
-                self.brakeIndicator.image = UIImage(named: "brake-inactive")
-            }
         })
         
         // start data flow to show preview
@@ -554,6 +380,7 @@ class VideoViewController: UIViewController
         
         // start getting data
         if let writer = getAssetWriter() {
+            
             videoWriter = writer
             
             let recordingClock = self.captureSession.masterClock!
@@ -610,7 +437,6 @@ class VideoViewController: UIViewController
     
     private func createStatsViews()
     {
-        // add location data
         view.addSubview(statsView)
 
         // create stop button
@@ -626,15 +452,6 @@ class VideoViewController: UIViewController
         //add return button
         view.addSubview(returnButton)
         
-//        let speedStrip = UIView(frame: CGRect(x: speedStripLeftBound - speedLabelWidth, y: speedStripStackY, width: speedStripWidth + speedLabelWidth * 2, height: speedLabelHeight))
-//
-//        speedStrip.backgroundColor = labelColorBgBlue
-//        statsView.addSubview(speedStripContainer)
-        
-        //create 10 speed marks in speedStrip
-//        createSpeedStripLabels(numberOfLabels: 3, centerMarkSpeed: 0)
-        
-        
         // create a timerDisplay
         videoTimerDisplay = createTimer()
         
@@ -643,48 +460,7 @@ class VideoViewController: UIViewController
         
         startQueuedUpdates()
     }
-    
-//    private func createSpeedStripLabels(numberOfLabels: Int, centerMarkSpeed: Int)
-//    {
-//        for label in speedStripStack {
-//            label.removeFromSuperview()
-//        }
-//
-//        let smallestMarkSpeed = centerMarkSpeed - Int(numberOfLabels / 2) * speedStripMarkUnit
-//
-//        for i in 0..<numberOfLabels {
-//            let speedLabelOffsetX = CGFloat(i + 1) * speedLabelWidth
-//            //            let frame = CGRect(x: speedLabelOffsetX, y: speedStripContainer.center.y, width: speedLabelWidth, height: speedLabelHeight)
-//            let label = UILabel()
-//            label.textAlignment = .center
-//            label.backgroundColor = UIColor.clear
-//            label.textColor = UIColor.white
-//            label.font = speedStripMarkFont
-//
-//            let markSpeed = smallestMarkSpeed + i * speedStripMarkUnit
-//            if markSpeed < 0 {
-//                label.text = "."
-//            }
-//            else {
-//                label.text = String(markSpeed)
-//            }
-//            speedStripContainer.addSubview(label)
-//            label.translatesAutoresizingMaskIntoConstraints = false
-//            label.centerYAnchor.constraint(equalTo: speedStripContainer.centerYAnchor).isActive = true
-//            label.widthAnchor.constraint(equalToConstant: speedLabelWidth).isActive = true
-//            label.heightAnchor.constraint(equalToConstant: speedLabelHeight).isActive = true
-//            if speedStripStack.count == 0 {
-//                label.leftAnchor.constraint(equalTo: speedStripContainer.leftAnchor, constant: speedLabelWidth).isActive = true
-//            }
-//            else {
-//                label.leftAnchor.constraint(equalTo: speedStripStack.last!.rightAnchor).isActive = true
-//            }
-//            speedStripStack.append(label)
-//        }
-//    }
-    
 
-    
     private func startTimer() -> Timer
     {
         return Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { Timer in
@@ -703,6 +479,177 @@ class VideoViewController: UIViewController
             }
             self.videoTimerDisplay.text = minuteString + ":" + secondString
         })
+    }
+    
+    /**
+     * Function to update main speed labels
+     */
+    private func updateSpeedLabels()
+    {
+        let speed = Int(round(self.currentSpeed))
+        print(speed)
+        
+        let hundredsDigit = speed / 100
+        let tensDigit = speed % 100 / 10
+        let onesDigit = speed % 10
+        
+        print(hundredsDigit)
+        print(tensDigit)
+        print(onesDigit)
+        print("\n")
+        
+        if hundredsDigit > self.lastHundredsDigit {
+            //increasing for hundreds
+            var diff = hundredsDigit - self.lastHundredsDigit
+            var temp = hundredsDigit
+            for _ in 0..<diff {
+                self.hundredsDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
+                temp += 1
+                self.hundredsDigitLabel.text = String(temp)
+            }
+            
+            //increasing for tens
+            diff = abs(tensDigit - self.lastTensDigit)
+            temp = self.lastTensDigit
+            for _ in 0..<diff {
+                temp -= 1
+                if temp < 0 {
+                    temp = 9
+                }
+                self.tensDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
+                self.tensDigitLabel.text = String(temp)
+            }
+            
+            //increasing for ones
+            diff = abs(onesDigit - self.lastOnesDigit)
+            temp = self.lastOnesDigit
+            for _ in 0..<diff {
+                temp += 1
+                if temp >= 10 {
+                    temp = 0
+                }
+                self.onesDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
+                self.onesDigitLabel.text = String(temp)
+            }
+        }
+        else if hundredsDigit < self.lastHundredsDigit {
+            //decreasing for hundreds
+            var diff = self.lastHundredsDigit - hundredsDigit
+            var temp = hundredsDigit
+            for _ in 0..<diff {
+                self.hundredsDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
+                temp -= 1
+                self.hundredsDigitLabel.text = String(temp)
+                
+            }
+            
+            //decreasing for tens
+            diff = abs(tensDigit - self.lastTensDigit)
+            temp = self.lastTensDigit
+            for _ in 0..<diff {
+                temp -= 1
+                if temp < 0 {
+                    temp = 9
+                }
+                self.tensDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
+                self.tensDigitLabel.text = String(temp)
+            }
+            
+            //decreasing for ones
+            diff = abs(onesDigit - self.lastOnesDigit)
+            temp = self.lastOnesDigit
+            for _ in 0..<diff {
+                temp -= 1
+                if temp < 0 {
+                    temp = 9
+                }
+                self.onesDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
+                self.onesDigitLabel.text = String(temp)
+            }
+            
+        }
+        else { //hundredsDigit the same, using tensDigit
+            if self.lastTensDigit > tensDigit { //should show decreasing animation
+                //decrease for tens
+                var diff = abs(self.lastTensDigit - tensDigit)
+                var temp = self.lastTensDigit
+                for _ in 0..<diff {
+                    temp -= 1
+                    if temp < 0 {
+                        temp = 9
+                    }
+                    self.tensDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
+                    self.tensDigitLabel.text = String(temp)
+                }
+                
+                //decrease for ones
+                diff = abs(onesDigit - self.lastOnesDigit)
+                temp = self.lastTensDigit
+                for _ in 0..<diff {
+                    temp -= 1
+                    if temp < 0 {
+                        temp = 9
+                    }
+                    self.onesDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
+                    self.onesDigitLabel.text = String(temp)
+                }
+            }
+            else if self.lastTensDigit < tensDigit { // should show increasing
+                //increase for tens
+                var diff = abs(tensDigit - self.lastTensDigit)
+                var temp = self.lastTensDigit
+                for _ in 0..<diff {
+                    temp += 1
+                    if temp >= 10 {
+                        temp = 0
+                    }
+                    self.tensDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
+                    self.tensDigitLabel.text = String(temp)
+                }
+                
+                //increase for ones
+                diff = abs(onesDigit - self.lastOnesDigit)
+                temp = self.lastOnesDigit
+                for _ in 0..<diff {
+                    temp += 1
+                    if temp >= 10 {
+                        temp = 0
+                    }
+                    self.onesDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
+                    self.onesDigitLabel.text = String(temp)
+                }
+            }
+            else { //tens digit the same, compare ones digit
+                if self.lastOnesDigit < onesDigit { //should show increasing
+                    let diff = abs(onesDigit - self.lastOnesDigit)
+                    var temp = self.lastOnesDigit
+                    for _ in 0..<diff {
+                        temp += 1
+                        if temp >= 10 {
+                            temp = 0
+                        }
+                        self.onesDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
+                        self.onesDigitLabel.text = String(temp)
+                    }
+                }
+                else if self.lastOnesDigit > onesDigit { //should show descreasing
+                    let diff = abs(onesDigit - self.lastOnesDigit)
+                    var temp = self.lastOnesDigit
+                    for _ in 0..<diff {
+                        temp -= 1
+                        if temp < 0 {
+                            temp = 9
+                        }
+                        self.onesDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
+                        self.onesDigitLabel.text = String(temp)
+                    }
+                }
+            }
+        }
+        
+        self.lastHundredsDigit = hundredsDigit
+        self.lastTensDigit = tensDigit
+        self.lastOnesDigit = onesDigit
     }
     
     func startQueuedUpdates() {
@@ -725,7 +672,7 @@ class VideoViewController: UIViewController
                     var deltaSpeed = -acceleration.z * self.deviceMotionRefreshInterval * 9.8 * 3.6
                     
                     //update throttle and brake indication according to deltaSpeed
-                    self.brakeAndThrottleUpdate(deltaSpeed)
+//                    self.brakeAndThrottleUpdate(deltaSpeed)
 
                     if self.currentSpeed + deltaSpeed < 0 {
                         //important to adjust deltaSpeed for speed strip calculation
@@ -733,8 +680,6 @@ class VideoViewController: UIViewController
                     }
                     //update current speed
                     self.currentSpeed = self.currentSpeed + deltaSpeed
-                    
-//                    self.speedStripUpdate(deltaSpeed)
                     
 //                    self.gravityIndicationUpdate(gravityAcceleration: validData.gravity)
                     
@@ -783,97 +728,6 @@ class VideoViewController: UIViewController
             self.brakeAmber = false
         }
     }
-    
-//    private func speedStripUpdate(_ deltaSpeed: Double)
-//    {
-//        //speed strip update
-//        let offset = -CGFloat(deltaSpeed / self.speedStripRangeMax) * self.speedStripWidth
-//
-//        if deltaSpeed > 0
-//        {
-//            //we need to put newly added speed labels in a separate array and adjust offsets in current thread
-//            var newlyAdded = [UILabel]()
-//
-//            for label in self.speedStripStack
-//            {
-//                let labelX = label.frame.origin.x
-//
-//                if labelX + self.speedLabelWidth + offset < self.speedStripLeftBound
-//                {
-//                    //animation to move left & fadeOut
-//                    UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
-//                        label.alpha = 0
-//                        label.frame.origin.x = self.speedStripLeftBound
-//
-//                    }, completion: { (complete) in
-//                        label.removeFromSuperview()
-//
-//                        //insert label from end
-//                        let frame = CGRect(x: self.speedStripStack.last!.frame.origin.x + self.speedLabelWidth, y: self.speedStripStackY, width: self.speedLabelWidth, height: self.speedLabelHeight)
-//                        let newLabel = UILabel(frame: frame)
-//                        newLabel.font = self.speedStripMarkFont
-//                        newLabel.textAlignment = .center
-//                        newLabel.backgroundColor = UIColor.clear
-//                        newLabel.textColor = UIColor.white
-//                        let numLabels = self.speedStripStack.count
-//                        let lastLabel = self.speedStripStack[numLabels - 1]
-//                        newLabel.text = String(Int(lastLabel.text!)! + 5)
-//                        self.speedStripContainer.addSubview(newLabel)
-//                        self.speedStripStack.removeFirst()
-//                        self.speedStripStack.append(newLabel)
-//
-//                        newlyAdded.append(newLabel)
-//                    })
-//                }
-//            }
-//            for label in speedStripStack {
-//                label.frame.origin.x += offset
-//            }
-//        }
-//        else if deltaSpeed < 0
-//        {
-//            var newlyAdded = [UILabel]()
-//
-//            //use speedStripStack.reversed() to deal with boundary cases first!
-//            for label in self.speedStripStack.reversed()
-//            {
-//                let labelX = label.frame.origin.x
-//
-//                if labelX + offset > self.speedStripRightBound
-//                {
-//                    //animation to move left & fadeOut
-//                    UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
-//                        label.alpha = 0
-//                        label.frame.origin.x = self.speedStripRightBound - self.speedLabelWidth
-//
-//                    }, completion: { (complete) in
-//                        label.removeFromSuperview()
-//
-//                        //insert label from front
-//                        let frame = CGRect(x: self.speedStripStack.first!.frame.origin.x - self.speedLabelWidth, y: self.speedStripStackY, width: self.speedLabelWidth, height: self.speedLabelHeight)
-//                        let newLabel = UILabel(frame: frame)
-//                        newLabel.font = self.speedStripMarkFont
-//                        newLabel.textAlignment = .center
-//                        newLabel.backgroundColor = UIColor.clear
-//                        newLabel.textColor = UIColor.white
-//                        let firstLabel = self.speedStripStack[0]
-//                        if let spdText = firstLabel.text, let firstLabelSpeed: Int = Int(spdText), (firstLabelSpeed - 5) >= 0 {
-//                            newLabel.text = String(firstLabelSpeed - 5)
-//                        }
-//                        self.speedStripStack.removeLast()
-//                        self.speedStripStack.insert(newLabel, at: 0)
-//                        self.statsView.addSubview(newLabel)
-//                        newlyAdded.append(newLabel)
-//                    })
-//                }
-//            }
-//
-//            for label in speedStripStack {
-//                label.frame.origin.x += offset
-//            }
-//        }
-//
-//    }
     
     // MARK: - Private functions to create buttons and labels
     // Helper function to create a video control button
@@ -968,35 +822,6 @@ class VideoViewController: UIViewController
         locationManager.startUpdatingLocation()
         print("location service started...")
     }
-    
-    private func createSpeedDisplay() -> UIStackView
-    {
-        let screenBounds = UIScreen.main.bounds
-        
-        let frame = CGRect(origin: CGPoint(x: screenBounds.width * 0.8, y: screenBounds.height * 0.7), size: CGSize(width: 150, height: 20))
-        
-        let speedDisplay = UIStackView(frame: frame)
-        speedDisplay.backgroundColor = labelColor
-        
-        return speedDisplay
-    }
-}
-
-extension VideoViewController: AVCaptureFileOutputRecordingDelegate
-{
-    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        
-        if let e = error  {
-            print("\(e)")
-            return
-        }
-        
-        // save video to camera roll
-        if error == nil {
-            print("Output file path is: " + outputFileURL.path)
-            UISaveVideoAtPathToSavedPhotosAlbum(outputFileURL.path, nil, nil, nil)
-        }
-    }
 }
 
 extension VideoViewController: CLLocationManagerDelegate
@@ -1028,37 +853,6 @@ extension VideoViewController: CLLocationManagerDelegate
 //
 //            currentSpeed = speed
             
-//            var adjustment: CGFloat = 0
-//            //sync speedStrip with updated speed
-//            if let lastLabel = speedStripStack.last, let spdText = lastLabel.text, let largestMarkSpd = Double(spdText), currentSpeed > largestMarkSpd {
-//                let centerMarkSpeed = Int(ceil(currentSpeed / Double(speedStripMarkUnit))) * speedStripMarkUnit
-//                createSpeedStripLabels(numberOfLabels: speedLabelTotal, centerMarkSpeed: centerMarkSpeed)
-//            }
-//            if let firstLabel = speedStripStack.first, let spdText = firstLabel.text, let smallestMarkSpd = Double(spdText), currentSpeed < smallestMarkSpd {
-//                let centerMarkSpeed = Int(floor(currentSpeed / Double(speedStripMarkUnit))) * speedStripMarkUnit
-//                createSpeedStripLabels(numberOfLabels: speedLabelTotal, centerMarkSpeed: centerMarkSpeed)
-//            }
-            
-            
-//            for label in speedStripStack {
-//                if let spdText = label.text, let labelSpd = Double(spdText), labelSpd > currentSpeed {
-//                    let difference = labelSpd - currentSpeed
-//                    let supposedOffset = CGFloat(difference / speedStripMarkUnit) * speedLabelWidth
-//
-//                    let actualOffset = label.center.x - UIScreen.main.bounds.width / 2
-//
-//                    adjustment = supposedOffset - actualOffset
-//                    break
-//                }
-//            }
-//            if adjustment != 0 {
-//                for label in speedStripStack {
-//                    UIView.animate(withDuration: speedDisplayRefreshInterval * 10, animations: {
-//                        label.center.x += adjustment
-//                    })
-//                }
-//            }
-            
             
             if deltaSpeed >= 0 {
                 self.throttleActive = true
@@ -1074,66 +868,13 @@ extension VideoViewController: CLLocationManagerDelegate
             
             self.latitudeContainer.text = coords.latitude
             self.longitudeContainer.text = coords.longitude
-            
-
-//            if lastSpeed != currentSpeed {
-//                print("time interval: \(interval)")
-//                interval = interval / 2000000000.0 / Double(abs(currentSpeed - lastSpeed))
-//                updateSpeedReading(interval: interval)
-//            }
-            
         }
-    }
-    
-    private func speedChangeFunc(_ changeFrom: Int, _ changeTo: Int) -> Int
-    {
-        if changeTo > changeFrom {
-        return changeFrom + 1
-        }
-        return changeFrom - 1
     }
     
     private func pinBackground(_ view: UIView, to stackView: UIStackView) {
         view.translatesAutoresizingMaskIntoConstraints = false
         stackView.insertSubview(view, at: 0)
         view.pin(to: stackView)
-    }
-//
-//    private func updateSpeedReading(interval: Double)
-//    {
-//        let changeFrom = lastSpeed
-//        let changeTo = currentSpeed
-//
-//        let nextUpdate: [String: Any] = ["changeTo": speedChangeFunc(changeFrom, changeTo), "until": changeTo, "interval": interval]
-//        Timer.scheduledTimer(timeInterval: interval, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
-//    }
-//
-//    @objc private func updateSpeed(_ timer: Timer)
-//    {
-//        var nextUpdate = timer.userInfo as! [String: Any]
-//        if let until = nextUpdate["until"] as? Int, let changeTo = nextUpdate["changeTo"] as? Int, self.currentSpeed == until, let interval = nextUpdate["interval"] as? Double { // new speed update hasn't occured, continue updating
-//            speedReading.text = String(changeTo)
-//            lastSpeed = changeTo
-//            if changeTo != until {
-//                nextUpdate["changeTo"] = speedChangeFunc(changeTo, until)
-//                Timer.scheduledTimer(timeInterval: interval, target: self, selector: #selector(updateSpeed), userInfo: nextUpdate, repeats: false)
-//            }
-//        }
-//    }
-    
-    // digits will be of format [1: 0, 2: 1, 3:5, ...]
-    private func getDigits(_ speed: Int) -> [Int: Int]
-    {
-        var digits = [Int: Int]()
-        var speed = speed
-        var index = 1
-        repeat {
-            digits[index] = speed % 10
-            speed /= 10
-            index += 1
-        } while (speed != 0)
-        print(digits)
-        return digits
     }
     
     /*
@@ -1163,13 +904,11 @@ extension VideoViewController: CLLocationManagerDelegate
         let longitudeString = String(format: "%d°%d'%@''%@", abs(degree), minutes, seconds, degree >= 0 ? "E" : "W")
         return (latitude: latitudeString, longitude: longitudeString)
     }
-
-    
 }
 
 extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        
+
         //Important: Correct your video orientation from your device orientation
         connection.videoOrientation = .landscapeLeft
         
@@ -1190,10 +929,9 @@ extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVC
 //        context.rotate(by: CGFloat(Double.pi * 90 / 180))
 //        context.translateBy(x: 0, y: -CGFloat(context.width))
 
-        let outputImage = self.statsView.asImage().cgImage!
 //        UIImageWriteToSavedPhotosAlbum(outputImage, nil, nil, nil)
+        context.draw(statsViewSnapshot.cgImage!, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
 //        context.draw(outputImage, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
-        context.draw(outputImage, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
 //        context.restoreGState()
         
         CVPixelBufferUnlockBaseAddress(pixelBuffer, [])

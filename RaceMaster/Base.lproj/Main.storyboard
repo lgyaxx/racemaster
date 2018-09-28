@@ -57,7 +57,6 @@
                                             <barButtonItem style="plain" systemItem="flexibleSpace" id="Uoi-wV-1TZ"/>
                                             <barButtonItem systemItem="camera" id="nhN-9S-K3a">
                                                 <connections>
-                                                    <action selector="takeVideo:" destination="BYZ-38-t0r" id="j1O-S3-273"/>
                                                     <segue destination="qdt-o2-ESN" kind="show" id="yuO-xd-Fjm"/>
                                                 </connections>
                                             </barButtonItem>
