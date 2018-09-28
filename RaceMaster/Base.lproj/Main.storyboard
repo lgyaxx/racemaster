@@ -109,14 +109,14 @@
                             <view contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xc2-kW-lE5" userLabel="stats view">
                                 <rect key="frame" x="0.0" y="0.0" width="812" height="375"/>
                                 <subviews>
-                                    <imageView userInteractionEnabled="NO" alpha="0.5" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="kUy-OG-Lex" userLabel="throttle">
+                                    <imageView userInteractionEnabled="NO" alpha="0.0" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="kUy-OG-Lex" userLabel="throttle">
                                         <rect key="frame" x="526" y="284" width="25" height="75"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="75" id="0Zx-B5-byG"/>
                                             <constraint firstAttribute="width" constant="25" id="yOz-JN-dtx"/>
                                         </constraints>
                                     </imageView>
-                                    <imageView autoresizesSubviews="NO" userInteractionEnabled="NO" alpha="0.5" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="YWJ-Ap-8TG" userLabel="brake">
+                                    <imageView autoresizesSubviews="NO" userInteractionEnabled="NO" alpha="0.0" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="YWJ-Ap-8TG" userLabel="brake">
                                         <rect key="frame" x="261" y="284" width="25" height="75"/>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="25" id="6yW-t6-cpc"/>
@@ -209,6 +209,20 @@
                                             <constraint firstAttribute="width" constant="100" id="nL3-cy-abX"/>
                                         </constraints>
                                     </view>
+                                    <imageView userInteractionEnabled="NO" alpha="0.29999999999999999" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="accelerate" translatesAutoresizingMaskIntoConstraints="NO" id="Csr-vd-sBJ">
+                                        <rect key="frame" x="386" y="129.66666666666666" width="40" height="40"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="40" id="5Qp-Hz-WWj"/>
+                                            <constraint firstAttribute="height" constant="40" id="eM3-dl-lsZ"/>
+                                        </constraints>
+                                    </imageView>
+                                    <imageView userInteractionEnabled="NO" alpha="0.29999999999999999" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="decelerate" translatesAutoresizingMaskIntoConstraints="NO" id="NR1-f1-3K1">
+                                        <rect key="frame" x="386" y="205.66666666666666" width="40" height="40"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="40" id="idY-Lw-Vu7"/>
+                                            <constraint firstAttribute="width" constant="40" id="xHB-IH-Vb9"/>
+                                        </constraints>
+                                    </imageView>
                                 </subviews>
                                 <constraints>
                                     <constraint firstItem="Cum-Vu-pAy" firstAttribute="top" secondItem="jjq-P2-Cnw" secondAttribute="bottom" constant="-32.666666666666657" id="17Q-3e-q3L"/>
@@ -224,10 +238,14 @@
                                     <constraint firstAttribute="bottom" secondItem="kUy-OG-Lex" secondAttribute="bottom" constant="16" id="X0u-Rc-8sg"/>
                                     <constraint firstAttribute="bottom" secondItem="ACg-wz-jIn" secondAttribute="bottom" constant="31" id="Z1J-8A-ZVp"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="leading" secondItem="Cum-Vu-pAy" secondAttribute="trailing" constant="4" id="dOa-4r-SPp"/>
+                                    <constraint firstItem="Csr-vd-sBJ" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="eGk-3j-Iq5"/>
+                                    <constraint firstItem="NR1-f1-3K1" firstAttribute="top" secondItem="jjq-P2-Cnw" secondAttribute="bottom" constant="3" id="eNn-um-oRP"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="leading" secondItem="YWJ-Ap-8TG" secondAttribute="trailing" constant="70" id="eWJ-1Z-WKX"/>
                                     <constraint firstItem="qaU-Ny-MLV" firstAttribute="width" secondItem="xc2-kW-lE5" secondAttribute="width" multiplier="0.18" id="gMM-Gu-Hlg"/>
+                                    <constraint firstItem="jjq-P2-Cnw" firstAttribute="top" secondItem="Csr-vd-sBJ" secondAttribute="bottom" constant="3" id="jqn-jD-W4A"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="qDQ-7h-hUe"/>
                                     <constraint firstAttribute="trailing" secondItem="qaU-Ny-MLV" secondAttribute="trailing" constant="23" id="uK3-r2-xtW"/>
+                                    <constraint firstItem="NR1-f1-3K1" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="wbd-QH-bXf"/>
                                     <constraint firstAttribute="bottom" secondItem="2eR-4v-OAq" secondAttribute="bottom" constant="44" id="xUU-W7-N1u"/>
                                 </constraints>
                             </view>
@@ -247,7 +265,9 @@
                         <viewLayoutGuide key="safeArea" id="NTS-aP-zzf"/>
                     </view>
                     <connections>
+                        <outlet property="accelerateIndicator" destination="Csr-vd-sBJ" id="qkd-vJ-kp3"/>
                         <outlet property="brakeIndicator" destination="YWJ-Ap-8TG" id="Y0x-Ug-bGE"/>
+                        <outlet property="decelerateIndicator" destination="NR1-f1-3K1" id="KrQ-0w-rmu"/>
                         <outlet property="gravityContainer" destination="ACg-wz-jIn" id="9TA-Xy-5qh"/>
                         <outlet property="gravityCrossHair" destination="Us1-he-kT3" id="3uh-Ar-TUI"/>
                         <outlet property="hundredsDigitLabel" destination="PDv-ue-BFg" id="dDK-oU-1tx"/>
@@ -347,7 +367,9 @@
         </scene>
     </scenes>
     <resources>
+        <image name="accelerate" width="64" height="64"/>
         <image name="crosshair" width="26" height="26"/>
+        <image name="decelerate" width="64" height="64"/>
         <image name="tachometer" width="96" height="96"/>
         <image name="throttle-inactive" width="100" height="100"/>
     </resources>

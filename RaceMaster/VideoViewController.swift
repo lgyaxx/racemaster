@@ -148,6 +148,8 @@ class VideoViewController: UIViewController
         return UIScreen.main.bounds.height
     }()
     
+    @IBOutlet var accelerateIndicator: UIImageView!
+    @IBOutlet var decelerateIndicator: UIImageView!
     
     @IBOutlet var throttleIndicator: UIImageView!
     @IBOutlet var brakeIndicator: UIImageView!
@@ -158,10 +160,11 @@ class VideoViewController: UIViewController
     private lazy var cmManager = CMMotionManager()
     private var currentSpeed: Double = 0
     private var lastSpeed: Double = 0
+    private var lastComparedSpeed: Int = 0
     private var lastTimestamp: Date = Date()
     private var lastAcceleration: Double = 0.0
     private var speedLock = false
-    private let speedDisplayRefreshInterval: Double = 1 / 3
+    private let speedDisplayRefreshInterval: Double = 1 / 5
     private let deviceMotionRefreshInterval: Double = 1 / 30
     private let videoSnapShotFrameRate: Double = 60
     private lazy var accelerationTimelines = [(date: Date, acceleration: Double)]()
@@ -271,7 +274,6 @@ class VideoViewController: UIViewController
     func getAssetWriter() -> AVAssetWriter?
     {
         do {
-            
             videoWriter = try AVAssetWriter(url: videoPath, fileType: AVFileType.mp4)
             
             let videoWidth = self.view.bounds.width + 6
@@ -350,15 +352,36 @@ class VideoViewController: UIViewController
 
         createStatsViews()
         
+        //take snapshots of statsview at 60 fps
         Timer.scheduledTimer(withTimeInterval: 1 / videoSnapShotFrameRate, repeats: true) { (Timer) in
             self.statsViewSnapshot = self.statsView.asImage()
         }
         
+        //update speed with interval of speedDisplayRefreshInterval
         Timer.scheduledTimer(withTimeInterval: speedDisplayRefreshInterval, repeats: true, block: { Timer in
+            let current = Int(round(self.currentSpeed))
+            if current > self.lastComparedSpeed {
+                UIView.animate(withDuration: self.speedDisplayRefreshInterval, animations: {
+                    self.accelerateIndicator.alpha = 1.0
+                    self.decelerateIndicator.alpha = 0.3
+                })
+            }
+            else if current < self.lastComparedSpeed {
+                UIView.animate(withDuration: self.speedDisplayRefreshInterval, animations: {
+                    self.accelerateIndicator.alpha = 0.3
+                    self.decelerateIndicator.alpha = 1.0
+                })
+            }
+            else {
+                UIView.animate(withDuration: self.speedDisplayRefreshInterval, animations: {
+                    self.accelerateIndicator.alpha = 0.3
+                    self.decelerateIndicator.alpha = 0.3
+                })
+            }
             
             //update speed reading
             self.updateSpeedLabels()
-            
+            self.lastComparedSpeed = current
         })
         
         // start data flow to show preview
@@ -710,14 +733,19 @@ class VideoViewController: UIViewController
             if let yConstraint = self.gravityCrossHairYConstraint {
                 yConstraint.isActive = false
             }
-            self.gravityCrossHairYConstraint = self.gravityCrossHair.centerYAnchor.constraint(equalTo: self.gravityContainer.centerYAnchor, constant: CGFloat(yOffset))
-            self.gravityCrossHairYConstraint!.isActive = true
+            UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
+                self.gravityCrossHairYConstraint = self.gravityCrossHair.centerYAnchor.constraint(equalTo: self.gravityContainer.centerYAnchor, constant: CGFloat(yOffset))
+                self.gravityCrossHairYConstraint!.isActive = true
+            })
             
             if let xConstraint = self.gravityCrossHairXConstraint {
                 xConstraint.isActive = false
             }
-            self.gravityCrossHairXConstraint = self.gravityCrossHair.centerXAnchor.constraint(equalTo: self.gravityContainer.centerXAnchor, constant: CGFloat(xOffset))
-            self.gravityCrossHairXConstraint!.isActive = true
+            
+            UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
+                self.gravityCrossHairXConstraint = self.gravityCrossHair.centerXAnchor.constraint(equalTo: self.gravityContainer.centerXAnchor, constant: CGFloat(xOffset))
+                self.gravityCrossHairXConstraint!.isActive = true
+            })
         }
     }
     
