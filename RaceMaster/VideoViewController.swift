@@ -96,7 +96,6 @@ class VideoViewController: UIViewController
         return .landscapeLeft
     }
     
-    
     private let labelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
     private let labelColorBgBlue = UIColor(red: 45.0/255.0, green: 158.0/255.0, blue: 255.0/255.0, alpha: 0.8)
     
@@ -132,6 +131,7 @@ class VideoViewController: UIViewController
     private let gravityContainerHeight = 100.0
     private var gravityCrossHairYConstraint: NSLayoutConstraint? = nil
     private var gravityCrossHairXConstraint: NSLayoutConstraint? = nil
+    @IBOutlet var gValueLabel: UILabel!
     
 
     // MARK: - Speed related controls
@@ -276,9 +276,9 @@ class VideoViewController: UIViewController
         do {
             videoWriter = try AVAssetWriter(url: videoPath, fileType: AVFileType.mp4)
             
-            let videoWidth = self.view.bounds.width + 6
+            let videoWidth = UIScreen.main.bounds.width
 //            let videoHeight = ceil(videoWidth * 9.0 / 16.0) + 3
-            let videoHeight = self.view.bounds.height
+            let videoHeight = UIScreen.main.bounds.height
             //Add video input 16:9
             videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: [
                 AVVideoCodecKey: AVVideoCodecType.h264,
@@ -409,9 +409,10 @@ class VideoViewController: UIViewController
             
             videoWriter = writer
             
-            let recordingClock = self.captureSession.masterClock!
+//            let recordingClock = self.captureSession.masterClock!
+//            videoWriter.startSession(atSourceTime: CMClockGetTime(recordingClock))
             videoWriter.startWriting()
-            videoWriter.startSession(atSourceTime: CMClockGetTime(recordingClock))
+            
             print("Start recording...")
             isRecordingStarted = true
         }
@@ -419,20 +420,25 @@ class VideoViewController: UIViewController
     
     @objc public func stopVideoRecording()
     {
+        guard isRecordingStarted else {
+            return
+        }
         print("Stopping recording...")
-        timer.invalidate()
-        //TODO: stop recording
+
+        isRecordingStarted = false
         
+        timer.invalidate()
         videoStopButton.removeFromSuperview()
         videoTimerDisplay.removeFromSuperview()
+        
         view.addSubview(videoStartButton)
         
         if let writer = videoWriter {
             writer.finishWriting {
                 print("Recording finished")
+                self.sessionAtSourceTime = nil
                 UISaveVideoAtPathToSavedPhotosAlbum(writer.outputURL.path, nil, nil, nil)
             }
-            self.isRecordingStarted = false
         }
     }
     
@@ -521,7 +527,7 @@ class VideoViewController: UIViewController
         if hundredsDigit > self.lastHundredsDigit {
             //increasing for hundreds
             var diff = hundredsDigit - self.lastHundredsDigit
-            var temp = hundredsDigit
+            var temp = self.lastHundredsDigit
             for _ in 0..<diff {
                 self.hundredsDigitLabel.slideDown(self.speedDisplayRefreshInterval / Double(diff))
                 temp += 1
@@ -555,7 +561,7 @@ class VideoViewController: UIViewController
         else if hundredsDigit < self.lastHundredsDigit {
             //decreasing for hundreds
             var diff = self.lastHundredsDigit - hundredsDigit
-            var temp = hundredsDigit
+            var temp = self.lastHundredsDigit
             for _ in 0..<diff {
                 self.hundredsDigitLabel.slideUp(self.speedDisplayRefreshInterval / Double(diff))
                 temp -= 1
@@ -964,6 +970,11 @@ extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVC
             
             guard isRecordingStarted, canWrite() else { return }
             
+            if sessionAtSourceTime == nil {
+                sessionAtSourceTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+                videoWriter.startSession(atSourceTime: sessionAtSourceTime!)
+            }
+            
             let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
             
             CVPixelBufferLockBaseAddress(pixelBuffer, [])
@@ -989,6 +1000,11 @@ extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVC
             }
             
             CVPixelBufferUnlockBaseAddress(pixelBuffer, [])
+        }
+        else if output == audioDataOutput,
+            audioWriterInput.isReadyForMoreMediaData {
+                //Write audio buffer
+                audioWriterInput.append(sampleBuffer)
         }
     }
     
