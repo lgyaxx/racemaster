@@ -285,7 +285,7 @@ class VideoViewController: UIViewController
                 AVVideoWidthKey: videoWidth,
                 AVVideoHeightKey: videoHeight,
                 AVVideoCompressionPropertiesKey: [
-                    AVVideoAverageBitRateKey: 2048000,
+                    AVVideoAverageBitRateKey: 2300000,
 //                    AVVideoMaxKeyFrameIntervalKey: 1.0,
                     AVVideoExpectedSourceFrameRateKey: NSNumber(value: 60),
 //                    AVVideoQualityKey: NSNumber(value: 1.0),
@@ -300,16 +300,16 @@ class VideoViewController: UIViewController
             }
             
             //Add audio input
-            audioWriterInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: [
-                AVFormatIDKey: kAudioFormatMPEG4AAC,
-                AVNumberOfChannelsKey: 1,
-                AVSampleRateKey: 44100,
-                AVEncoderBitRateKey: 64000,
-                ])
-            audioWriterInput.expectsMediaDataInRealTime = true
-            if videoWriter.canAdd(audioWriterInput) {
-                videoWriter.add(audioWriterInput)
-            }
+//            audioWriterInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: [
+//                AVFormatIDKey: kAudioFormatMPEG4AAC,
+//                AVNumberOfChannelsKey: 1,
+//                AVSampleRateKey: 44100,
+//                AVEncoderBitRateKey: 64000,
+//                ])
+//            audioWriterInput.expectsMediaDataInRealTime = true
+//            if videoWriter.canAdd(audioWriterInput) {
+//                videoWriter.add(audioWriterInput)
+//            }
             
             videoWriterInputPixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: videoWriterInput, sourcePixelBufferAttributes: [
                 kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
@@ -405,16 +405,19 @@ class VideoViewController: UIViewController
         timer = startTimer()
         
         // start getting data
-        if let writer = getAssetWriter() {
+        videoWriter = getAssetWriter()
+        if videoWriter != nil {
+            isRecordingStarted = true
             
-            videoWriter = writer
-            
-//            let recordingClock = self.captureSession.masterClock!
-//            videoWriter.startSession(atSourceTime: CMClockGetTime(recordingClock))
+            let recordingClock = self.captureSession.masterClock!
             videoWriter.startWriting()
+            videoWriter.startSession(atSourceTime: CMClockGetTime(recordingClock))
+
             
             print("Start recording...")
-            isRecordingStarted = true
+        }
+        else {
+            print("Failed start recording...")
         }
     }
     
@@ -423,9 +426,8 @@ class VideoViewController: UIViewController
         guard isRecordingStarted else {
             return
         }
+        self.isRecordingStarted = false
         print("Stopping recording...")
-
-        isRecordingStarted = false
         
         timer.invalidate()
         videoStopButton.removeFromSuperview()
@@ -436,8 +438,8 @@ class VideoViewController: UIViewController
         if let writer = videoWriter {
             writer.finishWriting {
                 print("Recording finished")
-                self.sessionAtSourceTime = nil
                 UISaveVideoAtPathToSavedPhotosAlbum(writer.outputURL.path, nil, nil, nil)
+                
             }
         }
     }
@@ -689,17 +691,11 @@ class VideoViewController: UIViewController
                     // Get the attitude relative to the magnetic north reference frame.
                     let acceleration = validData.userAcceleration
                     
-//                    print("User acceleration: \(acceleration)")
-//                    print("Gravity: \(validData.gravity)")
-                    
                     self.accelerationTimelines.append((Date(), -acceleration.z))
                     
                     //calculate instant delta speed for later usage
                     var deltaSpeed = -acceleration.z * self.deviceMotionRefreshInterval * 9.81 * 3.6
-                    
-                    //update throttle and brake indication according to deltaSpeed
-//                    self.brakeAndThrottleUpdate(deltaSpeed)
-
+         
                     if self.currentSpeed + deltaSpeed < 0 {
                         //important to adjust deltaSpeed for speed strip calculation
                         deltaSpeed = -self.currentSpeed
@@ -717,9 +713,14 @@ class VideoViewController: UIViewController
     
     private func gravityIndicationUpdate(gravityAcceleration gravity: CMAcceleration)
     {
+        //TODO: check for device attitude, continue only if device is left landscape
+        if abs(gravity.z) > 0.9 || abs(gravity.y) > 0.9 {
+            
+        }
         //x, z
         UIView.animate(withDuration: deviceMotionRefreshInterval) {
 //            print(gravity)
+            self.gValueLabel.text = self.numberFormatter.string(from: NSNumber(value: sqrt(pow(gravity.z, 2) + pow(gravity.y, 2))))! + "g"
 
             let multiplyer = 50.0
             var yOffset = multiplyer * gravity.z
@@ -752,34 +753,6 @@ class VideoViewController: UIViewController
                 self.gravityCrossHairXConstraint = self.gravityCrossHair.centerXAnchor.constraint(equalTo: self.gravityContainer.centerXAnchor, constant: CGFloat(xOffset))
                 self.gravityCrossHairXConstraint!.isActive = true
             })
-        }
-    }
-    
-    private func brakeAndThrottleUpdate(_ deltaSpeed: Double)
-    {
-        if currentSpeed == 0 {
-            self.brakeActive = true
-            self.brakeAmber = false
-            self.throttleActive = false
-        }
-        else if deltaSpeed >= -0.05 { // throttle is pressed
-            self.throttleActive = true
-            self.brakeActive = false
-        }
-        else if deltaSpeed < -0.20 { // decelerating
-            self.brakeActive = true
-            self.brakeAmber = false
-            self.throttleActive = false
-        }
-        else if deltaSpeed < -0.15 {
-            self.brakeActive = true
-            self.brakeAmber = true
-            self.throttleActive = false
-        }
-        else {
-            self.brakeActive = false
-            self.throttleActive = false
-            self.brakeAmber = false
         }
     }
     
@@ -908,16 +881,6 @@ extension VideoViewController: CLLocationManagerDelegate
 //            currentSpeed = speed
             
             
-            if deltaSpeed >= 0 {
-                self.throttleActive = true
-                self.brakeActive = false
-            }
-            
-            else {
-                self.throttleActive = false
-                self.brakeActive = true
-            }
-            
             let coords = decimalCoords(toDMSFormat: lastLocation.coordinate)
             
             self.latitudeContainer.text = coords.latitude
@@ -970,42 +933,28 @@ extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVC
             
             guard isRecordingStarted, canWrite() else { return }
             
-            if sessionAtSourceTime == nil {
-                sessionAtSourceTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-                videoWriter.startSession(atSourceTime: sessionAtSourceTime!)
-            }
+//            if sessionAtSourceTime == nil {
+//                sessionAtSourceTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+//                videoWriter.startSession(atSourceTime: sessionAtSourceTime!)
+//            }
             
             let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
             
             CVPixelBufferLockBaseAddress(pixelBuffer, [])
             let context = CGContext.init(data: CVPixelBufferGetBaseAddress(pixelBuffer), width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue)!
 
-    //        context.saveGState()
-    //        context.translateBy(x: CGFloat(context.width), y: 0)
-    //        context.translateBy(x: CGFloat(context.width), y: 0)
-    //        speedString.draw(in: renderBounds, withAttributes: attrs)
-    //        context?.clear(UIScreen.main.bounds)
-    //        context?.draw(latitudeDisplay.asImage().cgImage!, in: renderBounds)
-    //        context.scaleBy(x: 1.0, y: 1.0)
-    //        context.rotate(by: CGFloat(Double.pi * 90 / 180))
-    //        context.translateBy(x: 0, y: -CGFloat(context.width))
-
-    //        UIImageWriteToSavedPhotosAlbum(outputImage, nil, nil, nil)
             context.draw(statsViewSnapshot.cgImage!, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
-    //        context.restoreGState()
             
-            if videoWriterInputPixelBufferAdaptor.assetWriterInput.isReadyForMoreMediaData {
-                let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-                videoWriterInputPixelBufferAdaptor.append(pixelBuffer, withPresentationTime: timestamp)
-            }
+            let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+            videoWriterInputPixelBufferAdaptor.append(pixelBuffer, withPresentationTime: timestamp)
             
             CVPixelBufferUnlockBaseAddress(pixelBuffer, [])
         }
-        else if output == audioDataOutput,
-            audioWriterInput.isReadyForMoreMediaData {
-                //Write audio buffer
-                audioWriterInput.append(sampleBuffer)
-        }
+//        else if output == audioDataOutput,
+//            audioWriterInput.isReadyForMoreMediaData {
+//                //Write audio buffer
+//                audioWriterInput.append(sampleBuffer)
+//        }
     }
     
     func canWrite() -> Bool {

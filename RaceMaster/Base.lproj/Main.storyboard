@@ -109,20 +109,6 @@
                             <view contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xc2-kW-lE5" userLabel="stats view">
                                 <rect key="frame" x="0.0" y="0.0" width="812" height="375"/>
                                 <subviews>
-                                    <imageView userInteractionEnabled="NO" alpha="0.0" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="kUy-OG-Lex" userLabel="throttle">
-                                        <rect key="frame" x="526" y="284" width="25" height="75"/>
-                                        <constraints>
-                                            <constraint firstAttribute="height" constant="75" id="0Zx-B5-byG"/>
-                                            <constraint firstAttribute="width" constant="25" id="yOz-JN-dtx"/>
-                                        </constraints>
-                                    </imageView>
-                                    <imageView autoresizesSubviews="NO" userInteractionEnabled="NO" alpha="0.0" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="throttle-inactive" translatesAutoresizingMaskIntoConstraints="NO" id="YWJ-Ap-8TG" userLabel="brake">
-                                        <rect key="frame" x="261" y="284" width="25" height="75"/>
-                                        <constraints>
-                                            <constraint firstAttribute="width" constant="25" id="6yW-t6-cpc"/>
-                                            <constraint firstAttribute="height" constant="75" id="a9v-5Q-uJV"/>
-                                        </constraints>
-                                    </imageView>
                                     <stackView opaque="NO" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" distribution="fillEqually" spacing="2" translatesAutoresizingMaskIntoConstraints="NO" id="jjq-P2-Cnw" userLabel="speedLabelsContainer">
                                         <rect key="frame" x="356" y="172.66666666666666" width="100" height="30"/>
                                         <subviews>
@@ -238,20 +224,16 @@
                                     <constraint firstItem="Cum-Vu-pAy" firstAttribute="top" secondItem="jjq-P2-Cnw" secondAttribute="bottom" constant="-32.666666666666657" id="17Q-3e-q3L"/>
                                     <constraint firstItem="114-Pg-Tkr" firstAttribute="leading" secondItem="jjq-P2-Cnw" secondAttribute="trailing" constant="8" id="5kJ-Il-byl"/>
                                     <constraint firstItem="ACg-wz-jIn" firstAttribute="leading" secondItem="xc2-kW-lE5" secondAttribute="leading" constant="75" id="60k-cA-9fa"/>
-                                    <constraint firstAttribute="bottom" secondItem="YWJ-Ap-8TG" secondAttribute="bottom" constant="16" id="8kI-n0-bRK"/>
                                     <constraint firstItem="2eR-4v-OAq" firstAttribute="width" secondItem="xc2-kW-lE5" secondAttribute="width" multiplier="0.18" id="D11-La-IkD"/>
                                     <constraint firstAttribute="bottom" secondItem="qaU-Ny-MLV" secondAttribute="bottom" constant="71" id="EMi-uc-3Hq"/>
                                     <constraint firstItem="114-Pg-Tkr" firstAttribute="centerY" secondItem="xc2-kW-lE5" secondAttribute="centerY" id="Jzm-EE-Efd"/>
-                                    <constraint firstItem="kUy-OG-Lex" firstAttribute="leading" secondItem="jjq-P2-Cnw" secondAttribute="trailing" constant="70" id="OcP-Y7-L2Y"/>
                                     <constraint firstAttribute="trailing" secondItem="2eR-4v-OAq" secondAttribute="trailing" constant="23" id="QWZ-Tw-P8A"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="centerY" secondItem="xc2-kW-lE5" secondAttribute="centerY" id="WIQ-6B-UUY"/>
-                                    <constraint firstAttribute="bottom" secondItem="kUy-OG-Lex" secondAttribute="bottom" constant="16" id="X0u-Rc-8sg"/>
                                     <constraint firstAttribute="bottom" secondItem="ACg-wz-jIn" secondAttribute="bottom" constant="31" id="Z1J-8A-ZVp"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="leading" secondItem="Cum-Vu-pAy" secondAttribute="trailing" constant="4" id="dOa-4r-SPp"/>
                                     <constraint firstItem="FBn-W5-wiQ" firstAttribute="leading" secondItem="ACg-wz-jIn" secondAttribute="trailing" constant="-72" id="e4X-LH-3pv"/>
                                     <constraint firstItem="Csr-vd-sBJ" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="eGk-3j-Iq5"/>
                                     <constraint firstItem="NR1-f1-3K1" firstAttribute="top" secondItem="jjq-P2-Cnw" secondAttribute="bottom" constant="3" id="eNn-um-oRP"/>
-                                    <constraint firstItem="jjq-P2-Cnw" firstAttribute="leading" secondItem="YWJ-Ap-8TG" secondAttribute="trailing" constant="70" id="eWJ-1Z-WKX"/>
                                     <constraint firstItem="qaU-Ny-MLV" firstAttribute="width" secondItem="xc2-kW-lE5" secondAttribute="width" multiplier="0.18" id="gMM-Gu-Hlg"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="top" secondItem="Csr-vd-sBJ" secondAttribute="bottom" constant="3" id="jqn-jD-W4A"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="qDQ-7h-hUe"/>
@@ -277,7 +259,6 @@
                     </view>
                     <connections>
                         <outlet property="accelerateIndicator" destination="Csr-vd-sBJ" id="qkd-vJ-kp3"/>
-                        <outlet property="brakeIndicator" destination="YWJ-Ap-8TG" id="Y0x-Ug-bGE"/>
                         <outlet property="decelerateIndicator" destination="NR1-f1-3K1" id="KrQ-0w-rmu"/>
                         <outlet property="gValueLabel" destination="FBn-W5-wiQ" id="N9s-9p-iYX"/>
                         <outlet property="gravityContainer" destination="ACg-wz-jIn" id="9TA-Xy-5qh"/>
@@ -288,7 +269,6 @@
                         <outlet property="onesDigitLabel" destination="kfw-RV-DI6" id="E67-hR-xkm"/>
                         <outlet property="statsView" destination="xc2-kW-lE5" id="uCw-rK-zcn"/>
                         <outlet property="tensDigitLabel" destination="dcB-pp-ZhL" id="vFG-gV-qxT"/>
-                        <outlet property="throttleIndicator" destination="kUy-OG-Lex" id="HFR-bg-5cV"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="41K-qd-UfV" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -383,6 +363,5 @@
         <image name="crosshair" width="26" height="26"/>
         <image name="decelerate" width="64" height="64"/>
         <image name="tachometer" width="96" height="96"/>
-        <image name="throttle-inactive" width="100" height="100"/>
     </resources>
 </document>
