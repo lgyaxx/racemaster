@@ -20,6 +20,7 @@
 		427DE4102133ADDA00AB5C7C /* VideoPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427DE40F2133ADDA00AB5C7C /* VideoPreviewView.swift */; };
 		427DE4122133C12800AB5C7C /* IDETemplateMacros.plist in Resources */ = {isa = PBXBuildFile; fileRef = 427DE4112133C12800AB5C7C /* IDETemplateMacros.plist */; };
 		427DE4202133D0D000AB5C7C /* VideoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427DE41F2133D0D000AB5C7C /* VideoViewController.swift */; };
+		42F78F3C216D0DD600112103 /* test in Resources */ = {isa = PBXBuildFile; fileRef = 42F78F3B216D0DD600112103 /* test */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 		427DE40F2133ADDA00AB5C7C /* VideoPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPreviewView.swift; sourceTree = "<group>"; };
 		427DE4112133C12800AB5C7C /* IDETemplateMacros.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = IDETemplateMacros.plist; sourceTree = "<group>"; };
 		427DE41F2133D0D000AB5C7C /* VideoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewController.swift; sourceTree = "<group>"; };
+		42F78F3B216D0DD600112103 /* test */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = test; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,6 +111,7 @@
 			isa = PBXGroup;
 			children = (
 				4212C2FB2132F4B600C0D2D4 /* IndexViewController.swift */,
+				42F78F3B216D0DD600112103 /* test */,
 				4212C2CD2132E20E00C0D2D4 /* AppDelegate.swift */,
 				4212C2D12132E20E00C0D2D4 /* Main.storyboard */,
 				427DE41F2133D0D000AB5C7C /* VideoViewController.swift */,
@@ -246,6 +249,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				42F78F3C216D0DD600112103 /* test in Resources */,
 				427DE4122133C12800AB5C7C /* IDETemplateMacros.plist in Resources */,
 				4212C2D82132E20F00C0D2D4 /* LaunchScreen.storyboard in Resources */,
 				4212C2D52132E20F00C0D2D4 /* Assets.xcassets in Resources */,

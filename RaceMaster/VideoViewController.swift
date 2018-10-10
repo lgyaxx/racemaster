@@ -5,7 +5,7 @@
 import UIKit
 import AVFoundation
 import CoreLocation
-
+import Foundation
 import CoreMotion
 
 
@@ -39,17 +39,29 @@ extension UIView {
         ])
     }
     
-    public func asImage() -> UIImage {
+    public func asImage() -> UIImage? {
         let renderer = UIGraphicsImageRenderer(bounds: bounds)
         return renderer.image { rendererContext in
             self.layer.render(in: rendererContext.cgContext)
         }
     }
+    
+//    public func asImage() -> UIImage? {
+//        UIGraphicsBeginImageContextWithOptions(bounds.size, false, 0.0)
+//        drawHierarchy(in: bounds, afterScreenUpdates: true)
+//        let snapshotImage = UIGraphicsGetImageFromCurrentImageContext()
+//        UIGraphicsEndImageContext()
+//        return snapshotImage
+//    }
+    
 }
 
 class VideoViewController: UIViewController
 {
-    private var statsViewSnapshot: UIImage!
+    private var statsViewSnapshot: CGImage!
+    private lazy var bitmapInfo: UInt32 = {
+        return CGBitmapInfo.byteOrder32Little.rawValue | (CGImageAlphaInfo.premultipliedFirst.rawValue & CGBitmapInfo.alphaInfoMask.rawValue)
+    }()
     
     // MARK: - Video related controls
     private var isRecordingStarted = false
@@ -65,7 +77,6 @@ class VideoViewController: UIViewController
     
     fileprivate var videoWriterInputPixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor!
     fileprivate lazy var sDeviceRgbColorSpace = CGColorSpaceCreateDeviceRGB()
-    fileprivate lazy var bitmapInfo = CGBitmapInfo.byteOrder32Little.union(CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipFirst.rawValue))
     
     private lazy var tmpContext = CIContext(options: nil)
     
@@ -151,11 +162,6 @@ class VideoViewController: UIViewController
     @IBOutlet var accelerateIndicator: UIImageView!
     @IBOutlet var decelerateIndicator: UIImageView!
     
-    @IBOutlet var throttleIndicator: UIImageView!
-    @IBOutlet var brakeIndicator: UIImageView!
-    private lazy var throttleActive = false
-    private lazy var brakeActive = false
-    private lazy var brakeAmber = false
     
     private lazy var cmManager = CMMotionManager()
     private var currentSpeed: Double = 0
@@ -166,7 +172,7 @@ class VideoViewController: UIViewController
     private var speedLock = false
     private let speedDisplayRefreshInterval: Double = 1 / 5
     private let deviceMotionRefreshInterval: Double = 1 / 30
-    private let videoSnapShotFrameRate: Double = 60
+    private let videoSnapShotFrameRate: Double = 30
     private lazy var accelerationTimelines = [(date: Date, acceleration: Double)]()
     
     private weak var timer: Timer!
@@ -175,6 +181,9 @@ class VideoViewController: UIViewController
         formatter.maximumFractionDigits = 2
         return formatter
     } ()
+    
+    @IBOutlet var trackMiniMap: UIImageView!
+    
 
     
     // MARK: - Set up capture session
@@ -276,9 +285,9 @@ class VideoViewController: UIViewController
         do {
             videoWriter = try AVAssetWriter(url: videoPath, fileType: AVFileType.mp4)
             
-            let videoWidth = UIScreen.main.bounds.width
+            let videoWidth = UIScreen.main.bounds.width + 5
 //            let videoHeight = ceil(videoWidth * 9.0 / 16.0) + 3
-            let videoHeight = UIScreen.main.bounds.height
+            let videoHeight = UIScreen.main.bounds.height + 5
             //Add video input 16:9
             videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: [
                 AVVideoCodecKey: AVVideoCodecType.h264,
@@ -292,31 +301,32 @@ class VideoViewController: UIViewController
                 ],
                 
             ])
-            videoWriterInput.expectsMediaDataInRealTime = true //Make sure we are exporting data at realtime
             
+            //Make sure we are exporting data at realtime
+            videoWriterInput.expectsMediaDataInRealTime = true
             
             if videoWriter.canAdd(videoWriterInput) {
                 videoWriter.add(videoWriterInput)
             }
             
             //Add audio input
-//            audioWriterInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: [
-//                AVFormatIDKey: kAudioFormatMPEG4AAC,
-//                AVNumberOfChannelsKey: 1,
-//                AVSampleRateKey: 44100,
-//                AVEncoderBitRateKey: 64000,
-//                ])
-//            audioWriterInput.expectsMediaDataInRealTime = true
-//            if videoWriter.canAdd(audioWriterInput) {
-//                videoWriter.add(audioWriterInput)
-//            }
+            audioWriterInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: [
+                AVFormatIDKey: kAudioFormatMPEG4AAC,
+                AVNumberOfChannelsKey: 2,
+                AVSampleRateKey: 44100,
+                AVEncoderBitRateKey: 64000,
+            ])
+            audioWriterInput.expectsMediaDataInRealTime = true
+            if videoWriter.canAdd(audioWriterInput) {
+                videoWriter.add(audioWriterInput)
+            }
             
             videoWriterInputPixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: videoWriterInput, sourcePixelBufferAttributes: [
                 kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
                 kCVPixelBufferWidthKey as String: videoWidth,
                 kCVPixelBufferHeightKey as String: videoHeight,
                 kCVPixelFormatOpenGLESCompatibility as String: true,
-                ])
+            ])
             
             return videoWriter
         }
@@ -333,6 +343,16 @@ class VideoViewController: UIViewController
     }
     
     override func viewDidLoad() {
+        
+        let txtUrl = Bundle.main.url(forResource: "test", withExtension: nil)
+        do {
+            let txtData = try Data.init(contentsOf: txtUrl!)
+            let txtJSON = try JSONSerialization.jsonObject(with: txtData, options: [])
+            print(txtJSON)
+        } catch {
+            print(error)
+        }
+        
         
         testAuthorizedToUseCamera()
         
@@ -354,7 +374,7 @@ class VideoViewController: UIViewController
         
         //take snapshots of statsview at 60 fps
         Timer.scheduledTimer(withTimeInterval: 1 / videoSnapShotFrameRate, repeats: true) { (Timer) in
-            self.statsViewSnapshot = self.statsView.asImage()
+            self.statsViewSnapshot = self.statsView.asImage()?.cgImage!
         }
         
         //update speed with interval of speedDisplayRefreshInterval
@@ -930,31 +950,31 @@ extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVC
             
             //Important: Correct your video orientation from your device orientation
             connection.videoOrientation = .landscapeLeft
-            
-            guard isRecordingStarted, canWrite() else { return }
-            
-//            if sessionAtSourceTime == nil {
-//                sessionAtSourceTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-//                videoWriter.startSession(atSourceTime: sessionAtSourceTime!)
-//            }
-            
+        
             let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
             
-            CVPixelBufferLockBaseAddress(pixelBuffer, [])
-            let context = CGContext.init(data: CVPixelBufferGetBaseAddress(pixelBuffer), width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue)!
+            CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+            
+            let context = CGContext.init(data: CVPixelBufferGetBaseAddress(pixelBuffer), width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: self.sDeviceRgbColorSpace, bitmapInfo: self.bitmapInfo)!
+            let bound = CGRect(x: 0, y: 0, width: context.width, height: context.height)
 
-            context.draw(statsViewSnapshot.cgImage!, in: CGRect(x: 0, y: 0, width: context.width, height: context.height))
+            context.draw(self.statsViewSnapshot, in: bound)
+        
+            if self.isRecordingStarted, self.canWrite(), self.videoWriterInputPixelBufferAdaptor.assetWriterInput.isReadyForMoreMediaData {
+                let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+                self.videoWriterInputPixelBufferAdaptor.append(pixelBuffer, withPresentationTime: timestamp)
+            }
             
-            let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-            videoWriterInputPixelBufferAdaptor.append(pixelBuffer, withPresentationTime: timestamp)
+            CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        
             
-            CVPixelBufferUnlockBaseAddress(pixelBuffer, [])
         }
-//        else if output == audioDataOutput,
-//            audioWriterInput.isReadyForMoreMediaData {
-//                //Write audio buffer
-//                audioWriterInput.append(sampleBuffer)
-//        }
+        else if output == audioDataOutput,
+            audioWriterInput.isReadyForMoreMediaData {
+                print("recording audio")
+                //Write audio buffer
+                audioWriterInput.append(sampleBuffer)
+        }
     }
     
     func canWrite() -> Bool {
@@ -962,5 +982,7 @@ extension VideoViewController: AVCaptureVideoDataOutputSampleBufferDelegate, AVC
             && videoWriter != nil
             && videoWriter.status == .writing
     }
+    
+
 }
 
