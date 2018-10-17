@@ -46,14 +46,30 @@ extension UIView {
         }
     }
     
-//    public func asImage() -> UIImage? {
-//        UIGraphicsBeginImageContextWithOptions(bounds.size, false, 0.0)
-//        drawHierarchy(in: bounds, afterScreenUpdates: true)
-//        let snapshotImage = UIGraphicsGetImageFromCurrentImageContext()
-//        UIGraphicsEndImageContext()
-//        return snapshotImage
-//    }
-    
+}
+
+extension UIImage {
+    func rotate(radians: Float) -> UIImage? {
+        var newSize = CGRect(origin: CGPoint.zero, size: self.size).applying(CGAffineTransform(rotationAngle: CGFloat(radians))).size
+        // Trim off the extremely small float value to prevent core graphics from rounding it up
+        newSize.width = floor(newSize.width)
+        newSize.height = floor(newSize.height)
+        
+        UIGraphicsBeginImageContextWithOptions(newSize, true, self.scale)
+        let context = UIGraphicsGetCurrentContext()!
+        
+        // Move origin to middle
+        context.translateBy(x: newSize.width/2, y: newSize.height/2)
+        // Rotate around middle
+        context.rotate(by: CGFloat(radians))
+        // Draw the image at its center
+        self.draw(in: CGRect(x: -self.size.width/2, y: -self.size.height/2, width: self.size.width, height: self.size.height))
+        
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return newImage
+    }
 }
 
 class VideoViewController: UIViewController
@@ -107,8 +123,11 @@ class VideoViewController: UIViewController
         return .landscapeLeft
     }
     
-    private let labelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
+    private let labelColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.5)
+    private let labelColorWhite = UIColor(red: 1, green: 1, blue: 1, alpha: 0.8)
+    private let labelTextColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.5)
     private let labelColorBgBlue = UIColor(red: 45.0/255.0, green: 158.0/255.0, blue: 255.0/255.0, alpha: 0.8)
+    private let labelFontSmall = UIFont.systemFont(ofSize: 12)
     
     private var videoPreviewView: VideoPreviewView!
     private var videoPreviewLayer: AVCaptureVideoPreviewLayer!
@@ -132,8 +151,25 @@ class VideoViewController: UIViewController
     
     private var locationManager: CLLocationManager!
     private var lastLocation: CLLocation? = nil
-    @IBOutlet var longitudeContainer: UILabel!
-    @IBOutlet var latitudeContainer: UILabel!
+    private var longitudeContainer: UILabel!
+    private var latitudeContainer: UILabel!
+    private let coordsLabelWidth: CGFloat = 150
+    private let coordsLabelHeight: CGFloat = 20
+    private let coordsLabelMargin: CGFloat = 10
+    private let miniMapContainerWidth: CGFloat = 150
+    private let miniMapContainerHeight: CGFloat = 150
+    private let miniMapContainerMargin: CGFloat = 10
+    private var trackMiniMap: UIImageView!
+    private var trackMiniMapContainer: UIView!
+    private var trackCenterPoint: UIImageView!
+    private let trackCenterPointRadius: CGFloat = 5
+
+    private var ratio: CGFloat = 0
+    private var trackWidth: CGFloat = 0
+    private var trackHeight: CGFloat = 0
+    private var track_padding_height_scale: CGFloat = 0
+    private var track_padding_width_scale: CGFloat = 0
+    private var testCoordinates: [[String: Double]]!
     
     //MARK: - Gravity related variables
     @IBOutlet var gravityContainer: Circle!
@@ -170,7 +206,7 @@ class VideoViewController: UIViewController
     private var lastTimestamp: Date = Date()
     private var lastAcceleration: Double = 0.0
     private var speedLock = false
-    private let speedDisplayRefreshInterval: Double = 1 / 5
+    private let speedDisplayRefreshInterval: Double = 1 / 10
     private let deviceMotionRefreshInterval: Double = 1 / 30
     private let videoSnapShotFrameRate: Double = 30
     private lazy var accelerationTimelines = [(date: Date, acceleration: Double)]()
@@ -181,10 +217,6 @@ class VideoViewController: UIViewController
         formatter.maximumFractionDigits = 2
         return formatter
     } ()
-    
-    @IBOutlet var trackMiniMap: UIImageView!
-    
-
     
     // MARK: - Set up capture session
     
@@ -344,11 +376,14 @@ class VideoViewController: UIViewController
     
     override func viewDidLoad() {
         
-        let txtUrl = Bundle.main.url(forResource: "test", withExtension: nil)
+        let txtUrl = Bundle.main.url(forResource: "厦门观音山跑跑卡丁车", withExtension: "coordinates")
         do {
             let txtData = try Data.init(contentsOf: txtUrl!)
-            let txtJSON = try JSONSerialization.jsonObject(with: txtData, options: [])
-            print(txtJSON)
+            let coordinates = try JSONSerialization.jsonObject(with: txtData, options: []) as! [String: Any]
+            testCoordinates = (coordinates["coordinates"] as! [[String: Double]])
+//            track_padding_width_scale = (coordinates["track_width_padding_scale"] as! CGFloat)
+//            track_padding_height_scale = (coordinates["track_height_padding_scale"] as! CGFloat)
+//            print(testCoordinates)
         } catch {
             print(error)
         }
@@ -489,10 +524,12 @@ class VideoViewController: UIViewController
         return videoPreviewView
     }
     
+    /**
+    *   Function to create statistic labels and views on video preview layer
+    *   This function also starts location service
+    */
     private func createStatsViews()
     {
-        view.addSubview(statsView)
-
         // create stop button
         videoStopButton = createStopRecordingButton()
         
@@ -508,6 +545,46 @@ class VideoViewController: UIViewController
         
         // create a timerDisplay
         videoTimerDisplay = createTimer()
+        
+        //create miniMapContainer
+        var frame = CGRect(x: UIScreen.main.bounds.width - miniMapContainerWidth - miniMapContainerMargin, y: UIScreen.main.bounds.height - miniMapContainerHeight - miniMapContainerMargin, width: miniMapContainerWidth, height: miniMapContainerHeight)
+        trackMiniMapContainer = UIView(frame: frame)
+        trackMiniMapContainer.backgroundColor = labelColorWhite
+        trackMiniMapContainer.clipsToBounds = true
+        
+        //create mini map
+        frame = CGRect(x: 0, y: 0, width: 2 * miniMapContainerWidth, height: 2 * miniMapContainerHeight)
+        trackMiniMap = UIImageView(frame: frame)
+        trackMiniMap.image = UIImage(named: "厦门观音山跑跑卡丁车")
+        trackMiniMap.backgroundColor = .clear
+        trackMiniMapContainer.addSubview(trackMiniMap)
+        statsView.addSubview(trackMiniMapContainer)
+        
+        //create center point
+        frame = CGRect(x: miniMapContainerWidth / 2 - trackCenterPointRadius, y: miniMapContainerHeight / 2 - trackCenterPointRadius, width: trackCenterPointRadius * 2, height: trackCenterPointRadius * 2)
+        trackCenterPoint = UIImageView(frame: frame)
+        trackCenterPoint.image = UIImage(named: "dot")
+        trackMiniMapContainer.addSubview(trackCenterPoint)
+        
+        //create longitude and latitude labels
+        frame = CGRect(x: UIScreen.main.bounds.width - coordsLabelWidth - coordsLabelMargin, y: UIScreen.main.bounds.height - 2 * coordsLabelHeight - coordsLabelMargin, width: coordsLabelWidth, height: coordsLabelHeight)
+        longitudeContainer = UILabel.init(frame: frame)
+        longitudeContainer.backgroundColor = labelColor
+        longitudeContainer.textColor = labelTextColor
+        longitudeContainer.font = labelFontSmall
+        longitudeContainer.textAlignment = .center
+        
+        frame.origin.y += coordsLabelHeight
+        latitudeContainer = UILabel.init(frame: frame)
+        latitudeContainer.backgroundColor = labelColor
+        latitudeContainer.textColor = labelTextColor
+        latitudeContainer.font = labelFontSmall
+        latitudeContainer.textAlignment = .center
+        
+        statsView.addSubview(longitudeContainer)
+        statsView.addSubview(latitudeContainer)
+        
+//        view.addSubview(statsView)
         
         // start location service
         initializeLocationServices()
@@ -905,7 +982,28 @@ extension VideoViewController: CLLocationManagerDelegate
             
             self.latitudeContainer.text = coords.latitude
             self.longitudeContainer.text = coords.longitude
+            
+            //test
+            let randomCoord = testCoordinates[Int.random(in: 0..<testCoordinates.count)]
+            self.latitudeContainer.text = String(randomCoord["latitude"]!)
+            self.longitudeContainer.text = String(randomCoord["longitude"]!)
+            let offset_x_scale: CGFloat = CGFloat(randomCoord["offset_x_scale"]!)
+            let offset_y_scale: CGFloat = CGFloat(randomCoord["offset_y_scale"]!)
+            let offset_x: CGFloat = offset_x_scale * trackMiniMap.bounds.width
+            let offset_y: CGFloat = offset_y_scale * trackMiniMap.bounds.height
+            //update mini map
+//            trackMiniMap.image = trackMiniMap.image!.rotate()
+            UIView.animate(withDuration: 0.5) {
+                self.trackMiniMap.frame.origin.x = -offset_x + self.trackMiniMapContainer.bounds.width / 2
+                self.trackMiniMap.frame.origin.y = -offset_y + self.trackMiniMapContainer.bounds.height / 2
+            }
+
         }
+    }
+    
+    private func updateMiniMap()
+    {
+        
     }
     
     private func pinBackground(_ view: UIView, to stackView: UIStackView) {
