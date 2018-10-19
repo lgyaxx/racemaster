@@ -151,6 +151,8 @@ class VideoViewController: UIViewController
     
     private var locationManager: CLLocationManager!
     private var lastLocation: CLLocation? = nil
+    private var lastHeading: CLHeading? = nil
+    private var lastRotation: CGFloat = 0
     private var longitudeContainer: UILabel!
     private var latitudeContainer: UILabel!
     private let coordsLabelWidth: CGFloat = 150
@@ -164,11 +166,6 @@ class VideoViewController: UIViewController
     private var trackCenterPoint: UIImageView!
     private let trackCenterPointRadius: CGFloat = 5
 
-    private var ratio: CGFloat = 0
-    private var trackWidth: CGFloat = 0
-    private var trackHeight: CGFloat = 0
-    private var track_padding_height_scale: CGFloat = 0
-    private var track_padding_width_scale: CGFloat = 0
     private var testCoordinates: [[String: Double]]!
     
     //MARK: - Gravity related variables
@@ -381,18 +378,12 @@ class VideoViewController: UIViewController
             let txtData = try Data.init(contentsOf: txtUrl!)
             let coordinates = try JSONSerialization.jsonObject(with: txtData, options: []) as! [String: Any]
             testCoordinates = (coordinates["coordinates"] as! [[String: Double]])
-//            track_padding_width_scale = (coordinates["track_width_padding_scale"] as! CGFloat)
-//            track_padding_height_scale = (coordinates["track_height_padding_scale"] as! CGFloat)
-//            print(testCoordinates)
         } catch {
             print(error)
         }
         
-        
         testAuthorizedToUseCamera()
-        
         self.setupCaptureSession()
-        
         super.viewDidLoad()
         
         
@@ -583,8 +574,6 @@ class VideoViewController: UIViewController
         
         statsView.addSubview(longitudeContainer)
         statsView.addSubview(latitudeContainer)
-        
-//        view.addSubview(statsView)
         
         // start location service
         initializeLocationServices()
@@ -944,6 +933,7 @@ class VideoViewController: UIViewController
         locationManager.distanceFilter = kCLDistanceFilterNone
         locationManager.delegate = self
         locationManager.startUpdatingLocation()
+        locationManager.startUpdatingHeading()
         print("location service started...")
     }
 }
@@ -983,26 +973,41 @@ extension VideoViewController: CLLocationManagerDelegate
             self.latitudeContainer.text = coords.latitude
             self.longitudeContainer.text = coords.longitude
             
-            //test
-            let randomCoord = testCoordinates[Int.random(in: 0..<testCoordinates.count)]
-            self.latitudeContainer.text = String(randomCoord["latitude"]!)
-            self.longitudeContainer.text = String(randomCoord["longitude"]!)
-            let offset_x_scale: CGFloat = CGFloat(randomCoord["offset_x_scale"]!)
-            let offset_y_scale: CGFloat = CGFloat(randomCoord["offset_y_scale"]!)
-            let offset_x: CGFloat = offset_x_scale * trackMiniMap.bounds.width
-            let offset_y: CGFloat = offset_y_scale * trackMiniMap.bounds.height
-            //update mini map
-//            trackMiniMap.image = trackMiniMap.image!.rotate()
-            UIView.animate(withDuration: 0.5) {
-                self.trackMiniMap.frame.origin.x = -offset_x + self.trackMiniMapContainer.bounds.width / 2
-                self.trackMiniMap.frame.origin.y = -offset_y + self.trackMiniMapContainer.bounds.height / 2
-            }
-
+            updateMiniMap()
         }
+    }
+    
+    func locationManager(_ manager: CLLocationManager,
+                         didUpdateHeading newHeading: CLHeading)
+    {
+        print(newHeading)
+        lastHeading = newHeading
     }
     
     private func updateMiniMap()
     {
+        let randomCoord = testCoordinates[Int.random(in: 0..<testCoordinates.count)]
+        self.latitudeContainer.text = String(randomCoord["latitude"]!)
+        self.longitudeContainer.text = String(randomCoord["longitude"]!)
+        let offset_x_scale: CGFloat = CGFloat(randomCoord["offset_x_scale"]!)
+        let offset_y_scale: CGFloat = CGFloat(randomCoord["offset_y_scale"]!)
+        let offset_x: CGFloat = offset_x_scale * trackMiniMap.bounds.width
+        let offset_y: CGFloat = offset_y_scale * trackMiniMap.bounds.height
+        //update mini map
+        UIView.animate(withDuration: 0.5, animations: {
+            self.trackMiniMap.frame.origin.x = -offset_x + self.trackMiniMapContainer.bounds.width / 2
+            self.trackMiniMap.frame.origin.y = -offset_y + self.trackMiniMapContainer.bounds.height / 2
+        }) { (Bool) in
+//            if let heading = self.lastHeading {
+//                let rotationAnimation = CABasicAnimation(keyPath: "transform.rotation")
+//                rotationAnimation.fromValue = self.lastRotation
+//                rotationAnimation.toValue = CGFloat(Double.pi * heading.magneticHeading / 180)
+//                self.lastRotation = rotationAnimation.toValue as! CGFloat
+//                rotationAnimation.duration = 1.0
+//                
+//                self.trackMiniMap.layer.add(rotationAnimation, forKey: nil)
+//            }
+        }
         
     }
     
