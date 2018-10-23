@@ -156,25 +156,6 @@
                                             <constraint firstAttribute="width" constant="40" id="gOq-7C-FKo"/>
                                         </constraints>
                                     </imageView>
-                                    <view alpha="0.5" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ACg-wz-jIn" customClass="Circle" customModule="RaceMaster" customModuleProvider="target">
-                                        <rect key="frame" x="75" y="244" width="100" height="100"/>
-                                        <subviews>
-                                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="crosshair" translatesAutoresizingMaskIntoConstraints="NO" id="Us1-he-kT3" userLabel="crosshair">
-                                                <rect key="frame" x="45" y="45" width="10" height="10"/>
-                                                <constraints>
-                                                    <constraint firstAttribute="width" constant="10" id="Bw4-Jb-RaR"/>
-                                                    <constraint firstAttribute="height" constant="10" id="Wjh-nZ-vEh"/>
-                                                </constraints>
-                                            </imageView>
-                                        </subviews>
-                                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <constraints>
-                                            <constraint firstItem="Us1-he-kT3" firstAttribute="centerX" secondItem="ACg-wz-jIn" secondAttribute="centerX" id="5eD-rF-HUE"/>
-                                            <constraint firstAttribute="height" constant="100" id="BaV-s2-46m"/>
-                                            <constraint firstItem="Us1-he-kT3" firstAttribute="centerY" secondItem="ACg-wz-jIn" secondAttribute="centerY" id="N45-Qd-1ch"/>
-                                            <constraint firstAttribute="width" constant="100" id="nL3-cy-abX"/>
-                                        </constraints>
-                                    </view>
                                     <imageView userInteractionEnabled="NO" alpha="0.29999999999999999" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" insetsLayoutMarginsFromSafeArea="NO" image="accelerate" translatesAutoresizingMaskIntoConstraints="NO" id="Csr-vd-sBJ">
                                         <rect key="frame" x="386" y="129.66666666666666" width="40" height="40"/>
                                         <constraints>
@@ -189,32 +170,18 @@
                                             <constraint firstAttribute="width" constant="40" id="xHB-IH-Vb9"/>
                                         </constraints>
                                     </imageView>
-                                    <label opaque="NO" userInteractionEnabled="NO" alpha="0.5" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0.00g" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="FBn-W5-wiQ">
-                                        <rect key="frame" x="103" y="346" width="45" height="18"/>
-                                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <constraints>
-                                            <constraint firstAttribute="width" constant="45" id="nP7-2q-eO7"/>
-                                        </constraints>
-                                        <fontDescription key="fontDescription" type="system" pointSize="15"/>
-                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <nil key="highlightedColor"/>
-                                    </label>
                                 </subviews>
                                 <constraints>
                                     <constraint firstItem="Cum-Vu-pAy" firstAttribute="top" secondItem="jjq-P2-Cnw" secondAttribute="bottom" constant="-32.666666666666657" id="17Q-3e-q3L"/>
                                     <constraint firstItem="114-Pg-Tkr" firstAttribute="leading" secondItem="jjq-P2-Cnw" secondAttribute="trailing" constant="8" id="5kJ-Il-byl"/>
-                                    <constraint firstItem="ACg-wz-jIn" firstAttribute="leading" secondItem="xc2-kW-lE5" secondAttribute="leading" constant="75" id="60k-cA-9fa"/>
                                     <constraint firstItem="114-Pg-Tkr" firstAttribute="centerY" secondItem="xc2-kW-lE5" secondAttribute="centerY" id="Jzm-EE-Efd"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="centerY" secondItem="xc2-kW-lE5" secondAttribute="centerY" id="WIQ-6B-UUY"/>
-                                    <constraint firstAttribute="bottom" secondItem="ACg-wz-jIn" secondAttribute="bottom" constant="31" id="Z1J-8A-ZVp"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="leading" secondItem="Cum-Vu-pAy" secondAttribute="trailing" constant="4" id="dOa-4r-SPp"/>
-                                    <constraint firstItem="FBn-W5-wiQ" firstAttribute="leading" secondItem="ACg-wz-jIn" secondAttribute="trailing" constant="-72" id="e4X-LH-3pv"/>
                                     <constraint firstItem="Csr-vd-sBJ" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="eGk-3j-Iq5"/>
                                     <constraint firstItem="NR1-f1-3K1" firstAttribute="top" secondItem="jjq-P2-Cnw" secondAttribute="bottom" constant="3" id="eNn-um-oRP"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="top" secondItem="Csr-vd-sBJ" secondAttribute="bottom" constant="3" id="jqn-jD-W4A"/>
                                     <constraint firstItem="jjq-P2-Cnw" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="qDQ-7h-hUe"/>
                                     <constraint firstItem="NR1-f1-3K1" firstAttribute="centerX" secondItem="xc2-kW-lE5" secondAttribute="centerX" id="wbd-QH-bXf"/>
-                                    <constraint firstItem="FBn-W5-wiQ" firstAttribute="top" secondItem="ACg-wz-jIn" secondAttribute="bottom" constant="2" id="yHJ-cW-ITq"/>
                                 </constraints>
                             </view>
                         </subviews>
@@ -230,13 +197,11 @@
                             <constraint firstItem="xc2-kW-lE5" firstAttribute="leading" secondItem="Fgf-pp-agf" secondAttribute="leading" id="r2r-ah-LYW"/>
                             <constraint firstItem="xc2-kW-lE5" firstAttribute="trailing" secondItem="Fgf-pp-agf" secondAttribute="trailing" id="xtY-aY-5yp"/>
                         </constraints>
+                        <viewLayoutGuide key="safeArea" id="nyC-qf-5te"/>
                     </view>
                     <connections>
                         <outlet property="accelerateIndicator" destination="Csr-vd-sBJ" id="qkd-vJ-kp3"/>
                         <outlet property="decelerateIndicator" destination="NR1-f1-3K1" id="KrQ-0w-rmu"/>
-                        <outlet property="gValueLabel" destination="FBn-W5-wiQ" id="N9s-9p-iYX"/>
-                        <outlet property="gravityContainer" destination="ACg-wz-jIn" id="9TA-Xy-5qh"/>
-                        <outlet property="gravityCrossHair" destination="Us1-he-kT3" id="3uh-Ar-TUI"/>
                         <outlet property="hundredsDigitLabel" destination="PDv-ue-BFg" id="dDK-oU-1tx"/>
                         <outlet property="onesDigitLabel" destination="kfw-RV-DI6" id="E67-hR-xkm"/>
                         <outlet property="statsView" destination="xc2-kW-lE5" id="uCw-rK-zcn"/>
@@ -332,7 +297,6 @@
     </scenes>
     <resources>
         <image name="accelerate" width="64" height="64"/>
-        <image name="crosshair" width="26" height="26"/>
         <image name="decelerate" width="64" height="64"/>
         <image name="tachometer" width="96" height="96"/>
     </resources>

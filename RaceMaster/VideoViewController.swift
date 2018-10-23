@@ -46,6 +46,24 @@ extension UIView {
         }
     }
     
+    public func setAnchorPoint(_ point: CGPoint) {
+        var newPoint = CGPoint(x: bounds.size.width * point.x, y: bounds.size.height * point.y)
+        var oldPoint = CGPoint(x: bounds.size.width * layer.anchorPoint.x, y: bounds.size.height * layer.anchorPoint.y);
+        
+        newPoint = newPoint.applying(transform)
+        oldPoint = oldPoint.applying(transform)
+        
+        var position = layer.position
+        
+        position.x -= oldPoint.x
+        position.x += newPoint.x
+        
+        position.y -= oldPoint.y
+        position.y += newPoint.y
+        
+        layer.position = position
+        layer.anchorPoint = point
+    }
 }
 
 extension UIImage {
@@ -152,7 +170,8 @@ class VideoViewController: UIViewController
     private var locationManager: CLLocationManager!
     private var lastLocation: CLLocation? = nil
     private var lastHeading: CLHeading? = nil
-    private var lastRotation: CGFloat = 0
+    private var currentHeading: CLHeading? = nil
+    private var lastRotation: CGFloat = CGFloat.pi * 2
     private var longitudeContainer: UILabel!
     private var latitudeContainer: UILabel!
     private let coordsLabelWidth: CGFloat = 150
@@ -171,11 +190,15 @@ class VideoViewController: UIViewController
     //MARK: - Gravity related variables
     @IBOutlet var gravityContainer: Circle!
     @IBOutlet var gravityCrossHair: UIImageView!
-    private let gravityContainerWidth = 100.0
-    private let gravityContainerHeight = 100.0
-    private var gravityCrossHairYConstraint: NSLayoutConstraint? = nil
-    private var gravityCrossHairXConstraint: NSLayoutConstraint? = nil
+    private let gravityCrossHairRadius: Double = 3
+    private let gravityContainerMarginLeft: Double = 20
+    private let gravityContainerMarginBottom: Double = 30
+    private let gravityContainerWidth: Double = 100.0
+    private let gravityContainerHeight: Double = 100.0
     @IBOutlet var gValueLabel: UILabel!
+    private let gValueLabelWidth: Double = 50
+    private let gValueLabelHeight: Double = 18
+    private let gValueLabelMarginBottom: Double = 8
     
 
     // MARK: - Speed related controls
@@ -537,11 +560,33 @@ class VideoViewController: UIViewController
         // create a timerDisplay
         videoTimerDisplay = createTimer()
         
+        //create gravity container
+        var frame = CGRect(x: gravityContainerMarginLeft, y: Double(UIScreen.main.bounds.height) - gravityContainerWidth - gravityContainerMarginBottom, width: gravityContainerWidth, height: gravityContainerHeight)
+        gravityContainer = Circle(frame: frame)
+        gravityContainer.backgroundColor = labelColor
+        
+        //create gravity crosshair
+        frame = CGRect(x: gravityContainerWidth / 2 - gravityCrossHairRadius, y: gravityContainerHeight / 2 - gravityCrossHairRadius, width: gravityCrossHairRadius * 2, height: gravityCrossHairRadius * 2)
+        gravityCrossHair = UIImageView(frame: frame)
+        gravityCrossHair.image = UIImage(named: "crosshair")
+        gravityContainer.addSubview(gravityCrossHair)
+        statsView.addSubview(gravityContainer)
+        
+        //create g-value label
+        let center = Double(gravityContainer.center.x)
+        frame = CGRect(x: center - gValueLabelWidth / 2, y: Double(UIScreen.main.bounds.height) - gValueLabelMarginBottom - gValueLabelHeight, width: gValueLabelWidth, height: gValueLabelHeight)
+        gValueLabel = UILabel(frame: frame)
+        gValueLabel.font = labelFontSmall
+        gValueLabel.backgroundColor = labelColor
+        gValueLabel.textColor = labelTextColor
+        gValueLabel.textAlignment = .center
+        statsView.addSubview(gValueLabel)
+        
         //create miniMapContainer
-        var frame = CGRect(x: UIScreen.main.bounds.width - miniMapContainerWidth - miniMapContainerMargin, y: UIScreen.main.bounds.height - miniMapContainerHeight - miniMapContainerMargin, width: miniMapContainerWidth, height: miniMapContainerHeight)
+        frame = CGRect(x: UIScreen.main.bounds.width - miniMapContainerWidth - miniMapContainerMargin, y: UIScreen.main.bounds.height - miniMapContainerHeight - miniMapContainerMargin, width: miniMapContainerWidth, height: miniMapContainerHeight)
         trackMiniMapContainer = UIView(frame: frame)
-        trackMiniMapContainer.backgroundColor = labelColorWhite
-        trackMiniMapContainer.clipsToBounds = true
+        trackMiniMapContainer.backgroundColor = labelColor
+//        trackMiniMapContainer.clipsToBounds = true
         
         //create mini map
         frame = CGRect(x: 0, y: 0, width: 2 * miniMapContainerWidth, height: 2 * miniMapContainerHeight)
@@ -800,45 +845,29 @@ class VideoViewController: UIViewController
     private func gravityIndicationUpdate(gravityAcceleration gravity: CMAcceleration)
     {
         //TODO: check for device attitude, continue only if device is left landscape
-        if abs(gravity.z) > 0.9 || abs(gravity.y) > 0.9 {
-            
-        }
+//        if abs(gravity.z) > 0.9 || abs(gravity.y) > 0.9 {
+//
+//        }
         //x, z
         UIView.animate(withDuration: deviceMotionRefreshInterval) {
-//            print(gravity)
             self.gValueLabel.text = self.numberFormatter.string(from: NSNumber(value: sqrt(pow(gravity.z, 2) + pow(gravity.y, 2))))! + "g"
 
             let multiplyer = 50.0
             var yOffset = multiplyer * gravity.z
-            if abs(yOffset) > self.gravityContainerHeight / 2 {
-                yOffset = yOffset / abs(yOffset) * floor(self.gravityContainerHeight / 2 - 5)
+            if abs(yOffset) > (self.gravityContainerHeight / 2) {
+                yOffset = yOffset / abs(yOffset) * floor(self.gravityContainerHeight / 2)
             }
             
             var xOffset = multiplyer * gravity.y
-            if abs(xOffset) > self.gravityContainerWidth / 2 {
-                xOffset = xOffset / abs(xOffset) * floor(self.gravityContainerWidth / 2 - 5)
+            if abs(xOffset) > (self.gravityContainerWidth / 2) {
+                xOffset = xOffset / abs(xOffset) * floor(self.gravityContainerWidth / 2)
             }
             
 //            print("xOffset \(gravity.y)")
 //            print("yOffset \(gravity.z)")
 //            print("x \(gravity.x)")
-            
-            if let yConstraint = self.gravityCrossHairYConstraint {
-                yConstraint.isActive = false
-            }
-            UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
-                self.gravityCrossHairYConstraint = self.gravityCrossHair.centerYAnchor.constraint(equalTo: self.gravityContainer.centerYAnchor, constant: CGFloat(yOffset))
-                self.gravityCrossHairYConstraint!.isActive = true
-            })
-            
-            if let xConstraint = self.gravityCrossHairXConstraint {
-                xConstraint.isActive = false
-            }
-            
-            UIView.animate(withDuration: self.deviceMotionRefreshInterval, animations: {
-                self.gravityCrossHairXConstraint = self.gravityCrossHair.centerXAnchor.constraint(equalTo: self.gravityContainer.centerXAnchor, constant: CGFloat(xOffset))
-                self.gravityCrossHairXConstraint!.isActive = true
-            })
+            self.gravityCrossHair.center.y = CGFloat(self.gravityContainerHeight / 2 + yOffset)
+            self.gravityCrossHair.center.x = CGFloat(self.gravityContainerWidth / 2 + xOffset)
         }
     }
     
@@ -935,6 +964,10 @@ class VideoViewController: UIViewController
         locationManager.startUpdatingLocation()
         locationManager.startUpdatingHeading()
         print("location service started...")
+        
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { (Timer) in
+            self.updateMiniMap()
+        }
     }
 }
 
@@ -968,20 +1001,20 @@ extension VideoViewController: CLLocationManagerDelegate
 //            currentSpeed = speed
             
             
-            let coords = decimalCoords(toDMSFormat: lastLocation.coordinate)
+//            let coords = decimalCoords(toDMSFormat: lastLocation.coordinate)
+//
+//            self.latitudeContainer.text = coords.latitude
+//            self.longitudeContainer.text = coords.longitude
             
-            self.latitudeContainer.text = coords.latitude
-            self.longitudeContainer.text = coords.longitude
-            
-            updateMiniMap()
+//            updateMiniMap()
         }
     }
     
     func locationManager(_ manager: CLLocationManager,
                          didUpdateHeading newHeading: CLHeading)
     {
-        print(newHeading)
-        lastHeading = newHeading
+//        print(newHeading)
+        currentHeading = newHeading
     }
     
     private func updateMiniMap()
@@ -991,24 +1024,66 @@ extension VideoViewController: CLLocationManagerDelegate
         self.longitudeContainer.text = String(randomCoord["longitude"]!)
         let offset_x_scale: CGFloat = CGFloat(randomCoord["offset_x_scale"]!)
         let offset_y_scale: CGFloat = CGFloat(randomCoord["offset_y_scale"]!)
-        let offset_x: CGFloat = offset_x_scale * trackMiniMap.bounds.width
-        let offset_y: CGFloat = offset_y_scale * trackMiniMap.bounds.height
+        let offsetX: CGFloat = offset_x_scale * trackMiniMap.bounds.width
+        let offsetY: CGFloat = offset_y_scale * trackMiniMap.bounds.height
         //update mini map
-        UIView.animate(withDuration: 0.5, animations: {
-            self.trackMiniMap.frame.origin.x = -offset_x + self.trackMiniMapContainer.bounds.width / 2
-            self.trackMiniMap.frame.origin.y = -offset_y + self.trackMiniMapContainer.bounds.height / 2
-        }) { (Bool) in
-//            if let heading = self.lastHeading {
+        UIView.animate(withDuration: 0.1, animations: {
+            var x = self.miniMapContainerWidth / 2 - (offsetX - self.trackMiniMap.bounds.width / 2)
+            var y = self.miniMapContainerHeight / 2 - (offsetY - self.trackMiniMap.bounds.height / 2)
+            
+            x = offsetX - self.trackMiniMap.center.x
+            y = offsetY - self.trackMiniMap.center.y
+            let radius = sqrt(pow(x, 2) + pow(y, 2))
+            let alpha1 = atan(y/x)
+            
+            self.trackMiniMap.center.x = self.miniMapContainerWidth / 2
+            self.trackMiniMap.center.y = self.miniMapContainerHeight / 2
+            print("center x: \(self.trackMiniMap.center.x)")
+            print("center y: \(self.trackMiniMap.center.y)")
+//            self.trackMiniMap.setAnchorPoint(CGPoint(x: 0.5, y: 0.5))
+//            self.trackMiniMap.transform = CGAffineTransform(translationX: -self.trackMiniMap.center.x + self.trackMiniMapContainer.bounds.width / 2, y: -self.trackMiniMap.center.y + self.trackMiniMapContainer.bounds.height / 2)
+        
+            if let heading = self.currentHeading, let lHeading = self.lastHeading {
+//                self.trackMiniMap.setAnchorPoint(CGPoint(x: offset_x_scale, y: offset_y_scale))
+                let rotationAngle = CGFloat(heading.magneticHeading - 360) * CGFloat.pi / 180
+                print("rotatin angle \(rotationAngle)")
+                
+                let alpha2 = rotationAngle
+//                self.trackMiniMap.transform = CGAffineTransform(rotationAngle: rotationAngle)
+                
+                
+
 //                let rotationAnimation = CABasicAnimation(keyPath: "transform.rotation")
 //                rotationAnimation.fromValue = self.lastRotation
 //                rotationAnimation.toValue = CGFloat(Double.pi * heading.magneticHeading / 180)
+//                print("rotation from: \(rotationAnimation.fromValue)")
+//                print("rotation to: \(rotationAnimation.toValue)")
 //                self.lastRotation = rotationAnimation.toValue as! CGFloat
 //                rotationAnimation.duration = 1.0
-//                
+//
 //                self.trackMiniMap.layer.add(rotationAnimation, forKey: nil)
-//            }
-        }
+            }
+            self.lastHeading = self.currentHeading
+        })
         
+        
+
+//        if let heading = self.currentHeading, let lHeading = self.lastHeading {
+//            self.trackMiniMap.setAnchorPoint(CGPoint(x: offset_x_scale, y: offset_y_scale))
+//            let rotationAngle = CGFloat(heading.magneticHeading - 360) * CGFloat.pi / 180
+//            print("rotatin angle \(rotationAngle)")
+//            UIView.animate(withDuration: 0.5, animations: {
+//                self.trackMiniMap.transform = CGAffineTransform(rotationAngle: rotationAngle)
+//
+//            })
+//        }
+//
+//        self.trackMiniMap.setAnchorPoint(CGPoint(x: 0.5, y: 0.5))
+//        self.trackMiniMap.frame.origin.x = -offset_x + self.trackMiniMapContainer.bounds.width / 2
+//        self.trackMiniMap.frame.origin.y = -offset_y + self.trackMiniMapContainer.bounds.height / 2
+        
+
+//        self.lastHeading = self.currentHeading
     }
     
     private func pinBackground(_ view: UIView, to stackView: UIStackView) {
