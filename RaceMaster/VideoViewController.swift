@@ -180,6 +180,7 @@ class VideoViewController: UIViewController
     private let miniMapContainerWidth: CGFloat = 150
     private let miniMapContainerHeight: CGFloat = 150
     private let miniMapContainerMargin: CGFloat = 10
+    private var trackMiniMapFixedContainer: UIView!
     private var trackMiniMap: UIImageView!
     private var trackMiniMapContainer: UIView!
     private var trackCenterPoint: UIImageView!
@@ -582,11 +583,19 @@ class VideoViewController: UIViewController
         gValueLabel.textAlignment = .center
         statsView.addSubview(gValueLabel)
         
-        //create miniMapContainer
+        //create miniMapTopContainer
         frame = CGRect(x: UIScreen.main.bounds.width - miniMapContainerWidth - miniMapContainerMargin, y: UIScreen.main.bounds.height - miniMapContainerHeight - miniMapContainerMargin, width: miniMapContainerWidth, height: miniMapContainerHeight)
+        trackMiniMapFixedContainer = UIView(frame: frame)
+        trackMiniMapFixedContainer.backgroundColor = labelColor
+        trackMiniMapFixedContainer.clipsToBounds = true
+        statsView.addSubview(trackMiniMapFixedContainer)
+        
+        //create miniMapContainer
+        frame = CGRect(x: 0, y: 0, width: miniMapContainerWidth, height: miniMapContainerHeight)
         trackMiniMapContainer = UIView(frame: frame)
-        trackMiniMapContainer.backgroundColor = labelColor
+        trackMiniMapContainer.backgroundColor = .clear
 //        trackMiniMapContainer.clipsToBounds = true
+        trackMiniMapFixedContainer.addSubview(trackMiniMapContainer)
         
         //create mini map
         frame = CGRect(x: 0, y: 0, width: 2 * miniMapContainerWidth, height: 2 * miniMapContainerHeight)
@@ -594,13 +603,15 @@ class VideoViewController: UIViewController
         trackMiniMap.image = UIImage(named: "厦门观音山跑跑卡丁车")
         trackMiniMap.backgroundColor = .clear
         trackMiniMapContainer.addSubview(trackMiniMap)
-        statsView.addSubview(trackMiniMapContainer)
         
         //create center point
         frame = CGRect(x: miniMapContainerWidth / 2 - trackCenterPointRadius, y: miniMapContainerHeight / 2 - trackCenterPointRadius, width: trackCenterPointRadius * 2, height: trackCenterPointRadius * 2)
         trackCenterPoint = UIImageView(frame: frame)
         trackCenterPoint.image = UIImage(named: "dot")
         trackMiniMapContainer.addSubview(trackCenterPoint)
+        
+        
+        
         
         //create longitude and latitude labels
         frame = CGRect(x: UIScreen.main.bounds.width - coordsLabelWidth - coordsLabelMargin, y: UIScreen.main.bounds.height - 2 * coordsLabelHeight - coordsLabelMargin, width: coordsLabelWidth, height: coordsLabelHeight)
@@ -1028,62 +1039,21 @@ extension VideoViewController: CLLocationManagerDelegate
         let offsetY: CGFloat = offset_y_scale * trackMiniMap.bounds.height
         //update mini map
         UIView.animate(withDuration: 0.1, animations: {
-            var x = self.miniMapContainerWidth / 2 - (offsetX - self.trackMiniMap.bounds.width / 2)
-            var y = self.miniMapContainerHeight / 2 - (offsetY - self.trackMiniMap.bounds.height / 2)
+            let x = self.miniMapContainerWidth / 2 - (offsetX - self.trackMiniMap.bounds.width / 2)
+            let y = self.miniMapContainerHeight / 2 - (offsetY - self.trackMiniMap.bounds.height / 2)
             
-            x = offsetX - self.trackMiniMap.center.x
-            y = offsetY - self.trackMiniMap.center.y
-            let radius = sqrt(pow(x, 2) + pow(y, 2))
-            let alpha1 = atan(y/x)
-            
-            self.trackMiniMap.center.x = self.miniMapContainerWidth / 2
-            self.trackMiniMap.center.y = self.miniMapContainerHeight / 2
+            self.trackMiniMap.center.x = x
+            self.trackMiniMap.center.y = y
             print("center x: \(self.trackMiniMap.center.x)")
             print("center y: \(self.trackMiniMap.center.y)")
-//            self.trackMiniMap.setAnchorPoint(CGPoint(x: 0.5, y: 0.5))
-//            self.trackMiniMap.transform = CGAffineTransform(translationX: -self.trackMiniMap.center.x + self.trackMiniMapContainer.bounds.width / 2, y: -self.trackMiniMap.center.y + self.trackMiniMapContainer.bounds.height / 2)
-        
-            if let heading = self.currentHeading, let lHeading = self.lastHeading {
+
+            if let heading = self.currentHeading {
 //                self.trackMiniMap.setAnchorPoint(CGPoint(x: offset_x_scale, y: offset_y_scale))
                 let rotationAngle = CGFloat(heading.magneticHeading - 360) * CGFloat.pi / 180
-                print("rotatin angle \(rotationAngle)")
-                
-                let alpha2 = rotationAngle
-//                self.trackMiniMap.transform = CGAffineTransform(rotationAngle: rotationAngle)
-                
-                
-
-//                let rotationAnimation = CABasicAnimation(keyPath: "transform.rotation")
-//                rotationAnimation.fromValue = self.lastRotation
-//                rotationAnimation.toValue = CGFloat(Double.pi * heading.magneticHeading / 180)
-//                print("rotation from: \(rotationAnimation.fromValue)")
-//                print("rotation to: \(rotationAnimation.toValue)")
-//                self.lastRotation = rotationAnimation.toValue as! CGFloat
-//                rotationAnimation.duration = 1.0
-//
-//                self.trackMiniMap.layer.add(rotationAnimation, forKey: nil)
+                self.trackMiniMapContainer.transform = CGAffineTransform(rotationAngle: rotationAngle)
             }
             self.lastHeading = self.currentHeading
         })
-        
-        
-
-//        if let heading = self.currentHeading, let lHeading = self.lastHeading {
-//            self.trackMiniMap.setAnchorPoint(CGPoint(x: offset_x_scale, y: offset_y_scale))
-//            let rotationAngle = CGFloat(heading.magneticHeading - 360) * CGFloat.pi / 180
-//            print("rotatin angle \(rotationAngle)")
-//            UIView.animate(withDuration: 0.5, animations: {
-//                self.trackMiniMap.transform = CGAffineTransform(rotationAngle: rotationAngle)
-//
-//            })
-//        }
-//
-//        self.trackMiniMap.setAnchorPoint(CGPoint(x: 0.5, y: 0.5))
-//        self.trackMiniMap.frame.origin.x = -offset_x + self.trackMiniMapContainer.bounds.width / 2
-//        self.trackMiniMap.frame.origin.y = -offset_y + self.trackMiniMapContainer.bounds.height / 2
-        
-
-//        self.lastHeading = self.currentHeading
     }
     
     private func pinBackground(_ view: UIView, to stackView: UIStackView) {
