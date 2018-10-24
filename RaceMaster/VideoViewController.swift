@@ -1044,8 +1044,6 @@ extension VideoViewController: CLLocationManagerDelegate
             
             self.trackMiniMap.center.x = x
             self.trackMiniMap.center.y = y
-            print("center x: \(self.trackMiniMap.center.x)")
-            print("center y: \(self.trackMiniMap.center.y)")
 
             if let heading = self.currentHeading {
 //                self.trackMiniMap.setAnchorPoint(CGPoint(x: offset_x_scale, y: offset_y_scale))
